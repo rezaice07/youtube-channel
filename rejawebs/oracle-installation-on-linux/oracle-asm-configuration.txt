@@ -1,0 +1,291 @@
+
+ASM Configuration
+###############################################
+
+01. Create disk on vm
+	-add new 3 additional disk(Each Size 10GB)
+	
+	*** create a directory in vm folder with the name of "SharedDisk"
+	
+	-Power off your VM. Click on VM name/settings/Harddisk/Add/{SCSI + mode [check] Independent}/Create a new virtual disk/
+	{10 GB + Store Virtual Disk as single file}/ Name the disk as Disk2....Disk4
+	
+	
+	-Check Disks
+	fdisk -l
+	
+	-Newly created disks
+	/dev/sda
+	/dev/sdb
+	/dev/sdc
+	/dev/sdd
+	
+	-To check individually
+	fdisk -l /dev/sda
+	fdisk -l /dev/sdb
+	fdisk -l /dev/sdc
+	fdisk -l /dev/sdd
+	
+	-Partionning Disks
+	fdisk /dev/sdb
+	
+	#How to partionning...
+	
+	[root@dba167 ~]# fdisk /dev/sdb
+	Welcome to fdisk (util-linux 2.23.2).
+
+	Changes will remain in memory only, until you decide to write them.
+	Be careful before using the write command.
+
+	Device does not contain a recognized partition table
+	Building a new DOS disklabel with disk identifier 0x5029544a.
+
+	Command (m for help): m
+	Command action
+	   a   toggle a bootable flag
+	   b   edit bsd disklabel
+	   c   toggle the dos compatibility flag
+	   d   delete a partition
+	   g   create a new empty GPT partition table
+	   G   create an IRIX (SGI) partition table
+	   l   list known partition types
+	   m   print this menu
+	   n   add a new partition
+	   o   create a new empty DOS partition table
+	   p   print the partition table
+	   q   quit without saving changes
+	   s   create a new empty Sun disklabel
+	   t   change a partition's system id
+	   u   change display/entry units
+	   v   verify the partition table
+	   w   write table to disk and exit
+	   x   extra functionality (experts only)
+
+	Command (m for help): n
+	Partition type:
+	   p   primary (0 primary, 0 extended, 4 free)
+	   e   extended
+	Select (default p): p
+	Partition number (1-4, default 1):
+	First sector (2048-20971519, default 2048):
+	Using default value 2048
+	Last sector, +sectors or +size{K,M,G} (2048-20971519, default 20971519):
+	Using default value 20971519
+	Partition 1 of type Linux and of size 10 GiB is set
+
+	Command (m for help): w
+	The partition table has been altered!
+
+	Calling ioctl() to re-read partition table.
+	Syncing disks.
+	[root@dba167 ~]# fdisk -l /dev/sdb
+
+	Disk /dev/sdb: 10.7 GB, 10737418240 bytes, 20971520 sectors
+	Units = sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disk label type: dos
+	Disk identifier: 0x5029544a
+
+	   Device Boot      Start         End      Blocks   Id  System
+	/dev/sdb1            2048    20971519    10484736   83  Linux
+	
+	
+	-Now perform the same operation for the disk sdc and sdd
+	-After Partionning,Disk will be as like	
+    fdisk /dev/sdb     fdisk /dev/sdb1
+	fdisk /dev/sdc     fdisk /dev/sdc1
+	fdisk /dev/sdd     fdisk /dev/sdd1
+	
+	
+	- Now Create a new directory
+	/Installers
+	Copy file for asm and grid+oracle software by WinSCp 
+	
+	- Install ASM (Automatic Storage Management)
+		- Install kmod*
+		 yum install -y kmod*
+		 
+	-Download ASM related rpm from
+	https://www.oracle.com/linux/downloads/linux-asmlib-rhel7-downloads.html	
+	oracleasmlib-2.0.12-1.el7.x86_64.rpm
+	oracleasm-support-2.1.11-2.el7.x86_64.rpm
+	
+	Install above rpm in /Installers/ASM_RPM_LINUX_7.9
+	
+	*******************************************************	
+	[root@dba167 ASM_RPM_LINUX_7.9]# rpm -ivh oracleasmlib-2.0.12-1.el7.x86_64.rpm
+	warning: oracleasmlib-2.0.12-1.el7.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID ec551f03: NOKEY
+	Preparing...                          ################################# [100%]
+	Updating / installing...
+	   1:oracleasmlib-2.0.12-1.el7        ################################# [100%]
+	[root@dba167 ASM_RPM_LINUX_7.9]# rpm -ivh oracleasm-support-2.1.11-2.el7.x86_64.rpm
+	warning: oracleasm-support-2.1.11-2.el7.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID ec551f03: NOKEY
+	Preparing...                          ################################# [100%]
+	Updating / installing...
+	   1:oracleasm-support-2.1.11-2.el7   ################################# [100%]
+	Note: Forwarding request to 'systemctl enable oracleasm.service'.
+	Created symlink from /etc/systemd/system/multi-user.target.wants/oracleasm.service to /usr/lib/systemd/system/oracleasm.service.
+
+
+
+	-Check asm installation:
+	rpm -qa |grep oracleasm
+
+	**************************************************************
+	
+	-Now open configure for oracleasm
+	oracleasm configure
+	
+	[root@dba167 ~]# oracleasm configure
+	ORACLEASM_ENABLED=true
+	ORACLEASM_UID=oracle
+	ORACLEASM_GID=dba
+	ORACLEASM_SCANBOOT=true
+	ORACLEASM_SCANORDER=""
+	ORACLEASM_SCANEXCLUDE=""
+	ORACLEASM_SCAN_DIRECTORIES=""
+	ORACLEASM_USE_LOGICAL_BLOCK_SIZE="false"
+	-Note: no need to specify current directory. can configre in globally.
+	
+	-for configure
+	oracleasm configure -i
+
+[root@dba167 ~]# oracleasm configure -i
+
+Configuring the Oracle ASM library driver.
+
+This will configure the on-boot properties of the Oracle ASM library
+driver.  The following questions will determine whether the driver is
+loaded on boot and what permissions it will have.  The current values
+will be shown in brackets ('[]').  Hitting <ENTER> without typing an
+answer will keep that current value.  Ctrl-C will abort.
+
+Default user to own the driver interface [oracle]: grid
+Default group to own the driver interface [dba]: dba
+Start Oracle ASM library driver on boot (y/n) [y]: y
+Scan for Oracle ASM disks on boot (y/n) [y]: y
+Writing Oracle ASM library driver configuration: done
+
+[root@dba167 ~]# oracleasm configure
+ORACLEASM_ENABLED=true
+ORACLEASM_UID=grid
+ORACLEASM_GID=dba
+ORACLEASM_SCANBOOT=true
+ORACLEASM_SCANORDER=""
+ORACLEASM_SCANEXCLUDE=""
+ORACLEASM_SCAN_DIRECTORIES=""
+ORACLEASM_USE_LOGICAL_BLOCK_SIZE="false"
+
+	
+	
+02. Creating oracleasm disk 
+	-Reboot machine
+	reboot
+	
+	-check help for oracleasm
+	oracleasm
+	
+	-create disk
+	oracleasm createdisk DATA1 /dev/sdb1
+	oracleasm createdisk DATA2 /dev/sdc1
+	oracleasm createdisk FRA1 /dev/sdd1
+	
+	-check oracleasm listdisks
+	oracleasm listdisks
+	
+	Output:
+	--Disk Group Data(Normal Redundency)
+	DATA1
+	DATA2
+	
+	--Disk Group FRA(External Redundency)
+	FRA1
+	
+	
+
+############################################################################
+User Profile for environmental variables
+############################################################################
+GO
+[oracle@dba167 ~]# ls -larth
+
+then open in vi
+vi .bash_profile
+
+# User specific enveronment and startup programs
+
+ORACLE_HOSTNAME=dba167; export ORACLE_HOSTNAME
+ORACLE_UNQNAME=dba167; export ORACLE_UNQNAME
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+
+ORACLE_HOME=$ORACLE_BASE/product/19.3.0/db_1; export ORACLE_HOME
+ORACLE_SID=dba167; export ORACLE_SID
+ORACLE_TERM=xterm; export ORACLE_TERM
+PATH=/usr/sbin:$PATH export PATH
+PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch:$PATH; export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib; export LD_LIBRARY_PATH
+LIBPATH=$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+
+CLASSPATH=$ORACLE_HOME/jdk:$ORACLE_HOME/jdk/jre/bin:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib:$ORACLE_HOME/jdbc/lib; export CLASSPATH
+
+
+
+#for grid
+[grid@dba167 ~]# ls -larth
+
+then open in vi
+vi .bash_profile
+
+
+ORACLE_HOSTNAME=dba167; export ORACLE_HOSTNAME
+ORACLE_HOME=/u01/app/19.3.0/grid; export ORACLE_HOME
+ORACLE_BASE=/u01/app/grid; export ORACLE_BASE
+ORACLE_SID=+ASM; export ORACLE_SID
+ORACLE_TERM=xterm; export ORACLE_TERM
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=/usr/sbin:$PATH export PATH
+PATH=$ORACLE_HOME/bin:$ORACLE_HOME/OPatch:$PATH; export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib; export LD_LIBRARY_PATH
+LIBPATH=$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+
+CLASSPATH=$ORACLE_HOME/jdk:$ORACLE_HOME/jdk/jre/bin:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib:$ORACLE_HOME/jdbc/lib; export CLASSPATH
+PATH=/u01/app/19.3.0/grid/bin:/usr/sbin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/oracle/bin:u01/app/19.3.0/avagentHome/bin:/u01/app/19.3.0/grid/OPatch export PATH
+
+
+
+##################################################################################01
+01. chown -R oracle:oinstall Oracle_Grid\&Database_19c_Linux64bit
+chown -R oracle:oinstall Oracle_Grid\&Database_19c_Linux64bit
+
+02. chmod -R 777 Oracle_Grid\&Database_19c_Linux64bit
+chmod -R 777 Oracle_Grid\&Database_19c_Linux64bit
+
+--for grid
+03. Switch User to grid
+	su - grid
+
+Now unzip Grid:
+--------------------
+04. unzip the oracle grid software to 
+	cd /u01/app/19.3.0/grid
+	
+	then execute the line 
+	unzip -qa /Installers/Oracle_Grid\&Database_19c_Linux64bit/V982068-01_19cGrid.zip
+
+
+--for oralce
+05. Switch User to oracle
+	su - oracle
+	
+Now unzip Oracle:
+------------------------
+06. unzip the oracle grid software to 
+	cd /u01/app/oracle/product/19.3.0/db_1/
+	
+	then execute the line 
+	unzip -qa /Installers/Oracle_Grid\&Database_19c_Linux64bit/V982063-01_19cDatabase.zip
+	
+	
+
+
