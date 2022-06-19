@@ -1,8 +1,7 @@
 
 
 01. Connect with sys as sysdba on puttty or terminal
-	- let's connect with oracle user first
-	  then run following command...
+	- let's connect with oracle user first then run following command...
 	  
 	sqlplus / as sysdba
 
@@ -21,12 +20,11 @@
 	------------------------------------ ----------- ------------------------------
 	spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
 													 ile.266.1106722113
-
-
 04. Check ASM Related Info 
 	- Switch user to grid
 
 	[oracle@dba167 ~]$ su - grid
+	
 	- Now execute the command followed by "asmcmd"
 	[grid@dba167 ~]$ asmcmd
 	

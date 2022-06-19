@@ -1,0 +1,56 @@
+
+
+01. Downloading the client software from 
+	https://www.oracle.com/in/database/technologies/oracle19c-windows-downloads.html
+	then select the 	
+	-Download: WINDOWS.X64_193000_client.zip
+
+02. Unzip the software 
+	... \instantclient-basiclite-windows.x64-19.15.0.0.0dbru-2\instantclient_19_15
+	
+03. To Ping tns and connect, Open cmd and write 
+	tnsping YOUR_TNS_NAME
+	
+04. To check the cluster ready service (crs) resources
+	-Switch back to grid user then run following command
+	crsctl stat res -t
+
+05. To check server control utility use the following command
+	srvctl status listener -l Your_Lister_Name
+	
+	-Output:
+	Listener LISTENER is enabled
+	Listener LISTENER is running on node(s): dba167
+	
+06. To stop listener
+	srvctl stop listener -l Your_Lister_Name
+	
+	-Now check stutus
+	srvctl status listener -l Your_Lister_Name
+	
+	-Output
+	Listener LISTENER is enabled
+	Listener LISTENER is not running
+	
+	-Let's check listerner status
+	lsnrctl status
+	
+	-Now connect with tns by cmd in windows
+	sqlplus sys/sys123@RHEL_VM_GRID_ASM_ORA_DBA167 as sysdba;
+	
+	-to show parameter for grid user
+	show parameter local
+	
+
+	
+
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
