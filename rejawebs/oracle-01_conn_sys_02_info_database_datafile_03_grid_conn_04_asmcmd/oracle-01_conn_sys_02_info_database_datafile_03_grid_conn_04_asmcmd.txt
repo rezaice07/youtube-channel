@@ -1,0 +1,83 @@
+
+
+01. Connect with sys as sysdba on puttty or terminal
+	- let's connect with oracle user first
+	  then run following command...
+	  
+	sqlplus / as sysdba
+
+	- Check database info by sys user
+	select name
+	from  v$database;
+
+	- Check datafile info by sys user
+	select name
+	from  v$datafile;
+	
+	- Check spfile info
+	show paremeter spfile;	
+	
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
+													 ile.266.1106722113
+
+
+04. Check ASM Related Info 
+	- Switch user to grid
+
+	[oracle@dba167 ~]$ su - grid
+	- Now execute the command followed by "asmcmd"
+	[grid@dba167 ~]$ asmcmd
+	
+	- Now Check file by ls
+	ASMCMD> ls
+	DATA/
+	FRA/
+	
+	-For Detail Info	
+	ASMCMD> lsdg
+	
+	State    Type    Rebal  Sector  Logical_Sector  Block       AU  Total_MB  Free_M                                                          B  Req_mir_free_MB  Usable_file_MB  Offline_disks  Voting_files  Name
+	MOUNTED  NORMAL  N         512             512   4096  4194304     20472    1511                                                          2                0            7556              0             N  DATA/
+	MOUNTED  EXTERN  N         512             512   4096  4194304     10236     950                                                          0                0            9500              0             N  FRA/
+
+	- Now Check file by ls
+	ASMCMD> ls
+	DATA/
+	FRA/
+	
+	- Change Directory to DATA
+	ASMCMD> cd DATA;
+	
+	- Check list of file in "ASMCMD/DATA"
+	ASMCMD> ls
+	
+	ASM/
+	DBA167/
+	orapwasm
+	
+	- Change Directory to "DBA167"
+	ASMCMD> cd dba167
+	
+	- Check list of file in "ASMCMD/DATA/DBA167/"	
+	ASMCMD> ls
+	
+	CONTROLFILE/
+	DATAFILE/
+	ONLINELOG/
+	PARAMETERFILE/
+	TEMPFILE/
+	
+	- Change Directory to "DATAFILE"
+	ASMCMD> cd datafile
+	
+	- Check list of file in "ASMCMD/DATA/DBA167/DATAFILE"
+	ASMCMD> ls
+	
+	SYSAUX.258.1106721809
+	SYSTEM.257.1106721763
+	UNDOTBS1.259.1106721833
+	USERS.260.1106721835
+
+
