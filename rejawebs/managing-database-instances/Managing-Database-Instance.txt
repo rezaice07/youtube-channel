@@ -2,8 +2,226 @@
 
 Oracle - Managing the Database Instance
 ---------------------------------------------------
-01. Initialization parameter files
-	-
+01. Initialization parameter files	
+		
+	-Two Types of Parameter Files
+		a) SPFILE (Server Parameter File) Or Init file
+			- Is a file that is read by database server and then the instance will be created.
+			- Allows to change parameter value for shared pool, large pool, database buffer cache 
+			  without restarting database server. Means that, Changes made in database open mode.			  
+			- Containing Data in Binary format
+			- File Name- spfileorcl.ora
+			- Format:spfile<SID>.ora
+		b) pfile
+			- Containing Data in text format
+			- If any changes made in pfile then must restart the database server
+			- can be be created by spfile or vise versa
+			- File Name- initorcl.ora
+			- Format:spfile<SID>.ora
+			
+		Note: 
+			=> These two files containing same content but content data format is different.
+			=> If we have two types of file, first priority is spfile to create the database instance.
+			
+02. Check parameter file
+show parameter spfile
+or
+show parameter pfile
+
+Output:
+------
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
+                                                 ile.266.1106722113
+												 
+Note: if value is not blank the file location and file name with spf, indicates database instance is started with spfile else with pfile.
+
+03. Locate pfile, remove pfile and create pfile by spfile
+	-connect oracle user by putty and change directory to ...
+	cd $ORACLE_HOME/dbs
+	
+	ls -las
+	
+	- See the result with the name of "init.ora"	
+	[oracle@dba167 ~]$ cd $ORACLE_HOME/dbs
+	[oracle@dba167 dbs]$ ls -las
+	total 20
+	0 drwxr-xr-x.  2 oracle oinstall   78 Jun 20 16:57 .
+	4 drwxrwxr-x. 71 oracle oinstall 4096 Jun  7 06:50 ..
+	4 -rw-rw----.  1 oracle asmadmin 1544 Jun 20 16:57 hc_dba167.dat
+	4 -rw-r--r--.  1 oracle oinstall 3079 May 14  2015 init.ora
+	4 -rw-r-----.  1 oracle asmadmin   24 Jun  7 06:42 lkDBA167
+	4 -rw-r-----.  1 oracle oinstall 2048 Jun  7 06:45 orapwdba167
+	
+	- Remove the init.ora file
+	rm init.ora
+	
+	-Now create pfile from spfile
+	SQL> create pfile from spfile;
+	
+	- See the result of initdba167.ora as below...
+	[oracle@dba167 dbs]$ ls -las
+	total 20
+	0 drwxr-xr-x.  2 oracle oinstall   84 Jun 20 23:52 .
+	4 drwxrwxr-x. 71 oracle oinstall 4096 Jun  7 06:50 ..
+	4 -rw-rw----.  1 oracle asmadmin 1544 Jun 20 16:57 hc_dba167.dat
+	4 -rw-r--r--.  1 oracle asmadmin 1144 Jun 20 23:52 initdba167.ora
+	4 -rw-r-----.  1 oracle asmadmin   24 Jun  7 06:42 lkDBA167
+	4 -rw-r-----.  1 oracle oinstall 2048 Jun  7 06:45 orapwdba167
+	
+	- Now open the file in vi
+	[oracle@dba167 dbs]$ vi initdba167.ora
+
+	- Show the parameter pfile/spfile
+	show parameter pfile
+	+DATA/DBA167/PARAMETERFILE/spfile.266.1106722113
+	
+	-shutdown databas in immediate mode
+	SQL> shutdown immediate
+	Database closed.
+	Database dismounted.
+	ORACLE instance shut down.
+	
+	-Start database 
+	SQL> startup
+	ORACLE instance started.
+
+	Total System Global Area 2466249672 bytes
+	Fixed Size                  8899528 bytes
+	Variable Size             536870912 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7876608 bytes
+	Database mounted.
+	Database opened.
+	
+	- Show the parameter pfile/spfile
+	show parameter pfile
+	+DATA/DBA167/PARAMETERFILE/spfile.266.1106722113
+	
+	Note: here we can see the same file is reading from this location.
+	
+	-Now check the srvctl config database -d dba167 for spfile
+	
+	#[oracle@dba167 dbs]$ srvctl config database -d dba167
+	
+	Database unique name: dba167
+	Database name: dba167
+	Oracle home: /u01/app/oracle/product/19.3.0/db_1
+	Oracle user: oracle
+	Spfile: +DATA/DBA167/PARAMETERFILE/spfile.266.1106722113
+	Password file:
+	Domain:
+	Start options: open
+	Stop options: immediate
+	Database role: PRIMARY
+	Management policy: AUTOMATIC
+	Disk Groups: DATA,FRA
+	Services:
+	OSDBA group:
+	OSOPER group:
+	Database instance: dba167	
+	
+	
+	Note: If spfile is not available from this location, error will occur on starting the instance.
+	Let's see the another example
+	
+	- let's shutdown again
+	SQL> shutdown immediate
+	Database closed.
+	Database dismounted.
+	ORACLE instance shut down.
+	
+	- Now we will remvoe spfile by using grid user
+	[oracle@dba167 dbs]$ su - grid
+	
+	[grid@dba167 ~]$ asmcmd	
+	ASMCMD> ls
+	DATA/
+	FRA/
+	
+	ASMCMD> cd DATA
+	ASMCMD> ls
+	ASM/
+	DBA167/
+	orapwasm
+	
+	ASMCMD> cd dba167
+	ASMCMD> ls
+	CONTROLFILE/
+	DATAFILE/
+	ONLINELOG/
+	PARAMETERFILE/
+	TEMPFILE/
+	
+	ASMCMD> cd PARAMETERFILE/
+	ASMCMD> ls
+	spfile.266.1106722113
+	ASMCMD> rm -rf spfile.266.1106722113
+	ASMCMD> ls
+	ASMCMD-8002: entry 'PARAMETERFILE' does not exist in directory '+DATA/dba167/'
+	
+	
+	- Now Restart database instance
+	SQL> startup
+	ORACLE instance started.
+
+	Total System Global Area 2466249672 bytes
+	Fixed Size                  8899528 bytes
+	Variable Size             536870912 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7876608 bytes
+	Database mounted.
+	Database opened.
+	
+	Note: We don't have any spfile so how to startup the instance of a database.
+	Answer is - By using pfile.
+	
+	
+	SQL> show parameter spfile
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	spfile                               string
+	
+	- Let's restart server instance again
+	SQL> shutdown immediate
+	Database closed.
+	Database dismounted.
+	ORACLE instance shut down.
+	
+	[grid@dba167 db_1]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs
+[grid@dba167 dbs]$ ls
+hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167
+[grid@dba167 dbs]$ mv initdba167.ora initdba167.ora__
+mv: cannot move âinitdba167.oraâ to âinitdba167.ora__â: Permission denied
+[grid@dba167 dbs]$
+
+
+	
+
+
+
+
+	
+	
+
+
+	
+	
+	
+
+	
+
+	
+
+
+ 
+
+			
+		
+			
+	
 
 	
 
