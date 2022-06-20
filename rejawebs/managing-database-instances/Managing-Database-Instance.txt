@@ -1,0 +1,21 @@
+
+
+Oracle - Managing the Database Instance
+---------------------------------------------------
+01. Initialization parameter files
+	-
+
+	
+
+	
+
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
