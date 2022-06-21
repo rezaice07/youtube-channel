@@ -177,6 +177,8 @@ Note: if value is not blank the file location and file name with spf, indicates 
 	Note: We don't have any spfile so how to startup the instance of a database.
 	Answer is - By using pfile.
 	
+	let's explain by using below example...
+	
 	
 	SQL> show parameter spfile
 
@@ -190,12 +192,291 @@ Note: if value is not blank the file location and file name with spf, indicates 
 	Database dismounted.
 	ORACLE instance shut down.
 	
-	[grid@dba167 db_1]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs
-[grid@dba167 dbs]$ ls
-hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167
-[grid@dba167 dbs]$ mv initdba167.ora initdba167.ora__
-mv: cannot move âinitdba167.oraâ to âinitdba167.ora__â: Permission denied
-[grid@dba167 dbs]$
+	- Now we will change directory for pfile
+	[oracle@dba167 ]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs	
+	
+	- Rename pfile name
+	[oracle@dba167 dbs]$ mv initdba167.ora initdba167.ora__
+	
+	- Now restart instance
+	SQL> startup
+	ORA-01078: failure in processing system parameters
+	LRM-00109: could not open parameter file '/u01/app/oracle/product/19.3.0/db_1/dbs/initdba167.ora'
+	
+	So, Instance will not started without sp and pfile.
+
+	- Rename pfile name again
+	[oracle@dba167 dbs]$ mv initdba167.ora__ initdba167.ora
+	
+	-start the instance again
+	SQL> startup
+	ORACLE instance started.
+
+	Total System Global Area 2466249672 bytes
+	Fixed Size                  8899528 bytes
+	Variable Size             536870912 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7876608 bytes
+	Database mounted.
+	Database opened.
+	
+	-check spfile
+	SQL> show parameter spfile
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	spfile                               string
+
+
+	-Let's create spfile from pfile
+	SQL> create spfile ='+DATA' FROM pfile;
+	
+	-Also check in asmcmd by grid user
+	ASMCMD> ls
+	spfile.266.1107916923
+	
+	-restart instance again
+	SQL> startup force
+	ORACLE instance started.
+
+	Total System Global Area 2466249672 bytes
+	Fixed Size                  8899528 bytes
+	Variable Size             536870912 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7876608 bytes
+	Database mounted.
+	Database opened.
+	
+	-check spfile again
+	SQL> show parameter spfile
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
+													 ile.266.1107916923
+													 
+													 
+#################################################################################
+SGA Configuration
+#################################################################################
+01. Show parameter for sga
+
+	SQL> show parameter sga
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	allow_group_access_to_sga            boolean     FALSE
+	lock_sga                             boolean     FALSE
+	pre_page_sga                         boolean     TRUE
+	sga_max_size                         big integer 2352M
+	sga_min_size                         big integer 0
+	sga_target                           big integer 2352M
+	unified_audit_sga_queue_size         integer     1048576
+
+
+	-let's resize the sga value
+alter system 
+set sga_max_size=4G
+scope=spfile
+
+	-let's show parameter for sga
+	SQL> show parameter sga
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	allow_group_access_to_sga            boolean     FALSE
+	lock_sga                             boolean     FALSE
+	pre_page_sga                         boolean     TRUE
+	sga_max_size                         big integer 2352M
+	sga_min_size                         big integer 0
+	sga_target                           big integer 2352M
+	unified_audit_sga_queue_size         integer     1048576
+	
+	Note: No changes made for sga
+	
+	-let's restart database instance
+	SQL> startup force
+	ORACLE instance started.
+
+
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2365587456 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7868416 bytes
+	Database mounted.
+	Database opened.
+	
+	-let's show parameter for sga again
+	SQL> show parameter sga
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	allow_group_access_to_sga            boolean     FALSE
+	lock_sga                             boolean     FALSE
+	pre_page_sga                         boolean     TRUE
+	sga_max_size                         big integer 4G
+	sga_min_size                         big integer 0
+	sga_target                           big integer 2352M
+	unified_audit_sga_queue_size         integer     1048576
+	
+	Note: here the effect of sga_max_size is 4G
+	
+	
+	
+
+#################################################################################
+PGA Configuration
+#################################################################################
+01. Show parameter for pga
+	SQL> show parameter pga
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	pga_aggregate_limit                  big integer 2G
+	pga_aggregate_target                 big integer 780M
+	
+	-let's resize the pga value
+
+	SQL> alter system
+	2  set pga_aggregate_target=500M
+	3  scope = memory;
+
+	System altered.
+	
+	-Note: scope = memory means effect only in memory. After restarting the instance, it will set the previous value for pga_aggregate_target =780M
+
+	-let's show parameter for pga again
+	SQL>  show parameter pga;
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	pga_aggregate_limit                  big integer 2G
+	pga_aggregate_target                 big integer 500M
+
+	Note: here the effect of pga_aggregate_target is 500M
+	
+	-let's restart again
+	SQL> startup force
+	ORACLE instance started.
+
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2365587456 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7868416 bytes
+	Database mounted.
+	Database opened.
+	
+	-Now show the parameter pga 
+	SQL> show parameter pga
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	pga_aggregate_limit                  big integer 2G
+	pga_aggregate_target                 big integer 780M
+	
+	-Note: Here we can see the pga value has changes to previous one is 780M instaead of 500M
+	So memory value always reset after restarting if we set scope = memory.
+	
+	-let change the value for pga in both scope like spfile and pfile...
+
+	SQL> 
+alter system
+set pga_aggregate_target=600M
+scope=both; 
+
+	System altered.
+	
+	-Let's restart instance again to change the pga values
+	SQL> startup force
+	ORACLE instance started.
+
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2365587456 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7868416 bytes
+	Database mounted.
+	Database opened.
+	
+	-Now check pga parameter
+	SQL> show parameter pga
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	pga_aggregate_limit                  big integer 2G
+	pga_aggregate_target                 big integer 600M
+	
+	-Note: our pga_aggregate_target value has changed to 600M
+	
+	
+##############################################################################
+Starting Up an Oracle Database Instance
+##############################################################################
+01. let's shutdown the instance
+	SQL> shutdown immediate
+	Database closed.
+	Database dismounted.
+	ORACLE instance shut down.
+	
+02. restart instance on nomount stage
+	SQL> startup nomount
+	ORACLE instance started.
+
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2365587456 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7868416 bytes
+
+03. Let's see the status for instance
+	SQL> select status from v$instance;
+
+	STATUS
+	------------
+	STARTED
+	
+04. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+
+
+
+
 
 
 	
