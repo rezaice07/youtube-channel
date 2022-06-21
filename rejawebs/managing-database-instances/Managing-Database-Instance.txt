@@ -414,13 +414,15 @@ scope=both;
 ##############################################################################
 Starting Up an Oracle Database Instance
 ##############################################################################
-01. let's shutdown the instance
+01. Shutdown
+	-let's shutdown the instance
 	SQL> shutdown immediate
 	Database closed.
 	Database dismounted.
 	ORACLE instance shut down.
-	
-02. restart instance on nomount stage
+
+02. No Mount
+    -restart instance on nomount stage
 	SQL> startup nomount
 	ORACLE instance started.
 
@@ -430,14 +432,80 @@ Starting Up an Oracle Database Instance
 	Database Buffers         1912602624 bytes
 	Redo Buffers                7868416 bytes
 
-03. Let's see the status for instance
+    -Let's see the status for instance
 	SQL> select status from v$instance;
 
 	STATUS
 	------------
 	STARTED
 	
-04. 
+	Note: When database is in nomount, 
+		=> our database instance is created by reading the spfile file.
+		=> Allocating the SGA
+		=> Starting the backgound Processes
+		=>Opening the alert<SID>.ora and the trace file
+	
+03. Mount
+
+	-Now we will mount
+	SQL> alter database mount;
+
+	Database altered.
+	
+	Note: Mounting a database includes the following...
+	=>Associating a database with a previous started instance
+	=>Locating and opening all the control files speficied in the parameter file
+	=>Reading the control files to obtain the names and statuses of the data files and online redo log files.
+	=>Allows to perform specific maintenance operations...
+		a) Renaming data files.
+		b) Enabling and Disabling online redo logc) 
+		c) Performing Full database backup
+		
+	-Let's see the status for instance
+	SQL> select status from v$instance;
+
+	STATUS
+	------------
+	MOUNTED
+	
+	
+
+	
+04. Open
+	-Let's open the database instance
+	
+	SQL> alter database open;
+
+	Database altered.
+
+	-Now check the status of database Instance
+	
+	SQL> select status from v$instance;
+
+	STATUS
+	------------
+	OPEN
+	
+	
+	SQL> select OPEN_MODE,LOG_MODE from v$database;
+
+	OPEN_MODE            LOG_MODE
+	-------------------- ------------
+	READ WRITE           NOARCHIVELOG
+
+
+	
+	Note:TODO:
+
+	More Example:
+	If you want to database in read only then execute the command in mount phase...
+	alter database open read only;
+
+
+##############################################################################
+Shutting Down an Oracle Database Instance
+##############################################################################
+
 
 
 
