@@ -1,725 +1,232 @@
 
 
-Oracle - Managing the Database Instance
+Oracle - Managing the Database Instance Shutting Down
 ---------------------------------------------------
-01. Initialization parameter files	
+- Shutdown modes:
+	• A = ABORT
+	• I = IMMEDIATE
+	• T = TRANSACTIONAL
+	• N = NORMAL
+	
+	-A = ABORT:
+		=>Performs the least amount of work before shutting down
 		
-	-Two Types of Parameter Files
-		a) SPFILE (Server Parameter File) Or Init file
-			- Is a file that is read by database server and then the instance will be created.
-			- Allows to change parameter value for shared pool, large pool, database buffer cache 
-			  without restarting database server. Means that, Changes made in database open mode.			  
-			- Containing Data in Binary format
-			- File Name- spfileorcl.ora
-			- Format:spfile<SID>.ora
-		b) pfile
-			- Containing Data in text format
-			- If any changes made in pfile then must restart the database server
-			- can be be created by spfile or vise versa
-			- File Name- initorcl.ora
-			- Format:spfile<SID>.ora
-			
-		Note: 
-			=> These two files containing same content but content data format is different.
-			=> If we have two types of file, first priority is spfile to create the database instance.
-			
-02. Check parameter file
-show parameter spfile
-or
-show parameter pfile
-
-Output:
-------
-NAME                                 TYPE        VALUE
------------------------------------- ----------- ------------------------------
-spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
-                                                 ile.266.1106722113
-												 
-Note: if value is not blank the file location and file name with spf, indicates database instance is started with spfile else with pfile.
-
-03. Locate pfile, remove pfile and create pfile by spfile
-	-connect oracle user by putty and change directory to ...
-	cd $ORACLE_HOME/dbs
-	
-	ls -las
-	
-	- See the result with the name of "init.ora"	
-	[oracle@dba167 ~]$ cd $ORACLE_HOME/dbs
-	[oracle@dba167 dbs]$ ls -las
-	total 20
-	0 drwxr-xr-x.  2 oracle oinstall   78 Jun 20 16:57 .
-	4 drwxrwxr-x. 71 oracle oinstall 4096 Jun  7 06:50 ..
-	4 -rw-rw----.  1 oracle asmadmin 1544 Jun 20 16:57 hc_dba167.dat
-	4 -rw-r--r--.  1 oracle oinstall 3079 May 14  2015 init.ora
-	4 -rw-r-----.  1 oracle asmadmin   24 Jun  7 06:42 lkDBA167
-	4 -rw-r-----.  1 oracle oinstall 2048 Jun  7 06:45 orapwdba167
-	
-	- Remove the init.ora file
-	rm init.ora
-	
-	-Now create pfile from spfile
-	SQL> create pfile from spfile;
-	
-	- See the result of initdba167.ora as below...
-	[oracle@dba167 dbs]$ ls -las
-	total 20
-	0 drwxr-xr-x.  2 oracle oinstall   84 Jun 20 23:52 .
-	4 drwxrwxr-x. 71 oracle oinstall 4096 Jun  7 06:50 ..
-	4 -rw-rw----.  1 oracle asmadmin 1544 Jun 20 16:57 hc_dba167.dat
-	4 -rw-r--r--.  1 oracle asmadmin 1144 Jun 20 23:52 initdba167.ora
-	4 -rw-r-----.  1 oracle asmadmin   24 Jun  7 06:42 lkDBA167
-	4 -rw-r-----.  1 oracle oinstall 2048 Jun  7 06:45 orapwdba167
-	
-	- Now open the file in vi
-	[oracle@dba167 dbs]$ vi initdba167.ora
-
-	- Show the parameter pfile/spfile
-	show parameter pfile
-	+DATA/DBA167/PARAMETERFILE/spfile.266.1106722113
-	
-	-shutdown databas in immediate mode
-	SQL> shutdown immediate
-	Database closed.
-	Database dismounted.
-	ORACLE instance shut down.
-	
-	-Start database 
-	SQL> startup
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	Database opened.
-	
-	- Show the parameter pfile/spfile
-	show parameter pfile
-	+DATA/DBA167/PARAMETERFILE/spfile.266.1106722113
-	
-	Note: here we can see the same file is reading from this location.
-	
-	-Now check the srvctl config database -d dba167 for spfile
-	
-	#[oracle@dba167 dbs]$ srvctl config database -d dba167
-	
-	Database unique name: dba167
-	Database name: dba167
-	Oracle home: /u01/app/oracle/product/19.3.0/db_1
-	Oracle user: oracle
-	Spfile: +DATA/DBA167/PARAMETERFILE/spfile.266.1106722113
-	Password file:
-	Domain:
-	Start options: open
-	Stop options: immediate
-	Database role: PRIMARY
-	Management policy: AUTOMATIC
-	Disk Groups: DATA,FRA
-	Services:
-	OSDBA group:
-	OSOPER group:
-	Database instance: dba167	
-	
-	
-	Note: If spfile is not available from this location, error will occur on starting the instance.
-	Let's see the another example
-	
-	- let's shutdown again
-	SQL> shutdown immediate
-	Database closed.
-	Database dismounted.
-	ORACLE instance shut down.
-	
-	- Now we will remvoe spfile by using grid user
-	[oracle@dba167 dbs]$ su - grid
-	
-	[grid@dba167 ~]$ asmcmd	
-	ASMCMD> ls
-	DATA/
-	FRA/
-	
-	ASMCMD> cd DATA
-	ASMCMD> ls
-	ASM/
-	DBA167/
-	orapwasm
-	
-	ASMCMD> cd dba167
-	ASMCMD> ls
-	CONTROLFILE/
-	DATAFILE/
-	ONLINELOG/
-	PARAMETERFILE/
-	TEMPFILE/
-	
-	ASMCMD> cd PARAMETERFILE/
-	ASMCMD> ls
-	spfile.266.1106722113
-	ASMCMD> rm -rf spfile.266.1106722113
-	ASMCMD> ls
-	ASMCMD-8002: entry 'PARAMETERFILE' does not exist in directory '+DATA/dba167/'
-	
-	
-	- Now Restart database instance
-	SQL> startup
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	Database opened.
-	
-	Note: We don't have any spfile so how to startup the instance of a database.
-	Answer is - By using pfile.
-	
-	let's explain by using below example...
-	
-	
-	SQL> show parameter spfile
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	spfile                               string
-	
-	- Let's restart server instance again
-	SQL> shutdown immediate
-	Database closed.
-	Database dismounted.
-	ORACLE instance shut down.
-	
-	- Now we will change directory for pfile
-	[oracle@dba167 ]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs	
-	
-	- Rename pfile name
-	[oracle@dba167 dbs]$ mv initdba167.ora initdba167.ora__
-	
-	- Now restart instance
-	SQL> startup
-	ORA-01078: failure in processing system parameters
-	LRM-00109: could not open parameter file '/u01/app/oracle/product/19.3.0/db_1/dbs/initdba167.ora'
-	
-	So, Instance will not started without sp and pfile.
-
-	- Rename pfile name again
-	[oracle@dba167 dbs]$ mv initdba167.ora__ initdba167.ora
-	
-	-start the instance again
-	SQL> startup
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	Database opened.
-	
-	-check spfile
-	SQL> show parameter spfile
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	spfile                               string
-
-
-	-Let's create spfile from pfile
-	SQL> create spfile ='+DATA' FROM pfile;
-	
-	-Also check in asmcmd by grid user
-	ASMCMD> ls
-	spfile.266.1107916923
-	
-	-restart instance again
-	SQL> startup force
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	Database opened.
-	
-	-check spfile again
-	SQL> show parameter spfile
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
-													 ile.266.1107916923
-													 
-													 
-#################################################################################
-SGA Configuration
-#################################################################################
-01. Show parameter for sga
-
-	SQL> show parameter sga
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	allow_group_access_to_sga            boolean     FALSE
-	lock_sga                             boolean     FALSE
-	pre_page_sga                         boolean     TRUE
-	sga_max_size                         big integer 2352M
-	sga_min_size                         big integer 0
-	sga_target                           big integer 2352M
-	unified_audit_sga_queue_size         integer     1048576
-
-
-	-let's resize the sga value
-alter system 
-set sga_max_size=4G
-scope=spfile
-
-	-let's show parameter for sga
-	SQL> show parameter sga
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	allow_group_access_to_sga            boolean     FALSE
-	lock_sga                             boolean     FALSE
-	pre_page_sga                         boolean     TRUE
-	sga_max_size                         big integer 2352M
-	sga_min_size                         big integer 0
-	sga_target                           big integer 2352M
-	unified_audit_sga_queue_size         integer     1048576
-	
-	Note: No changes made for sga
-	
-	-let's restart database instance
-	SQL> startup force
-	ORACLE instance started.
-
-
-	Total System Global Area 4294963272 bytes
-	Fixed Size                  8904776 bytes
-	Variable Size            2365587456 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7868416 bytes
-	Database mounted.
-	Database opened.
-	
-	-let's show parameter for sga again
-	SQL> show parameter sga
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	allow_group_access_to_sga            boolean     FALSE
-	lock_sga                             boolean     FALSE
-	pre_page_sga                         boolean     TRUE
-	sga_max_size                         big integer 4G
-	sga_min_size                         big integer 0
-	sga_target                           big integer 2352M
-	unified_audit_sga_queue_size         integer     1048576
-	
-	Note: here the effect of sga_max_size is 4G
-	
-	
-	
-
-#################################################################################
-PGA Configuration
-#################################################################################
-01. Show parameter for pga
-	SQL> show parameter pga
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	pga_aggregate_limit                  big integer 2G
-	pga_aggregate_target                 big integer 780M
-	
-	-let's resize the pga value
-
-	SQL> alter system
-	2  set pga_aggregate_target=500M
-	3  scope = memory;
-
-	System altered.
-	
-	-Note: scope = memory means effect only in memory. After restarting the instance, it will set the previous value for pga_aggregate_target =780M
-
-	-let's show parameter for pga again
-	SQL>  show parameter pga;
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	pga_aggregate_limit                  big integer 2G
-	pga_aggregate_target                 big integer 500M
-
-	Note: here the effect of pga_aggregate_target is 500M
-	
-	-let's restart again
-	SQL> startup force
-	ORACLE instance started.
-
-	Total System Global Area 4294963272 bytes
-	Fixed Size                  8904776 bytes
-	Variable Size            2365587456 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7868416 bytes
-	Database mounted.
-	Database opened.
-	
-	-Now show the parameter pga 
-	SQL> show parameter pga
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	pga_aggregate_limit                  big integer 2G
-	pga_aggregate_target                 big integer 780M
-	
-	-Note: Here we can see the pga value has changes to previous one is 780M instaead of 500M
-	So memory value always reset after restarting if we set scope = memory.
-	
-	-let change the value for pga in both scope like spfile and pfile...
-
-	SQL> 
-alter system
-set pga_aggregate_target=600M
-scope=both; 
-
-	System altered.
-	
-	-Let's restart instance again to change the pga values
-	SQL> startup force
-	ORACLE instance started.
-
-	Total System Global Area 4294963272 bytes
-	Fixed Size                  8904776 bytes
-	Variable Size            2365587456 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7868416 bytes
-	Database mounted.
-	Database opened.
-	
-	-Now check pga parameter
-	SQL> show parameter pga
-
-	NAME                                 TYPE        VALUE
-	------------------------------------ ----------- ------------------------------
-	pga_aggregate_limit                  big integer 2G
-	pga_aggregate_target                 big integer 600M
-	
-	-Note: our pga_aggregate_target value has changed to 600M
-	
-	
-##############################################################################
-Starting Up an Oracle Database Instance
-##############################################################################
-01. Shutdown
-	-let's shutdown the instance
-	SQL> shutdown immediate
-	Database closed.
-	Database dismounted.
-	ORACLE instance shut down.
-
-02. No Mount
-    -restart instance on nomount stage
-	SQL> startup nomount
-	ORACLE instance started.
-
-	Total System Global Area 4294963272 bytes
-	Fixed Size                  8904776 bytes
-	Variable Size            2365587456 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7868416 bytes
-
-    -Let's see the status for instance
-	SQL> select status from v$instance;
-
-	STATUS
-	------------
-	STARTED
-	
-	Note: When database is in nomount, 
-		=> our database instance is created by reading the spfile file.
-		=> Allocating the SGA
-		=> Starting the backgound Processes
-		=>Opening the alert<SID>.ora and the trace file
-	
-03. Mount
-
-	-Now we will mount
-	SQL> alter database mount;
-
-	Database altered.
-	
-	Note: Mounting a database includes the following...
-	=>Associating a database with a previous started instance
-	=>Locating and opening all the control files speficied in the parameter file
-	=>Reading the control files to obtain the names and statuses of the data files and online redo log files.
-	=>Allows to perform specific maintenance operations...
-		a) Renaming data files.
-		b) Enabling and Disabling online redo logc) 
-		c) Performing Full database backup
+		=>Only down the instance but not database
 		
-	-Let's see the status for instance
-	SQL> select status from v$instance;
-
-	STATUS
-	------------
-	MOUNTED
-	
-	
-
-	
-04. Open
-	-Let's open the database instance
-	
-	SQL> alter database open;
-
-	Database altered.
-
-	-Now check the status of database Instance
-	
-	SQL> select status from v$instance;
-
-	STATUS
-	------------
-	OPEN
-	
-	
-	SQL> select OPEN_MODE,LOG_MODE from v$database;
-
-	OPEN_MODE            LOG_MODE
-	-------------------- ------------
-	READ WRITE           NOARCHIVELOG
-
-	
-	Note: Opening the database includes the following:
-		=> A normal database operation means that an instance is started and the database is mounted and opened. 
+		=>No checkpoint happens
+		
+		=>No new connection allowed.
+		
+		=>Not waiting until current session end
+		
+		=>Not waiting until current transctions end
+				
+		=>Requires recovery before startup by SMON,
+		  this is because if there any transctions those are not writen to datafile.
+		  
+		=>Database and redo buffers are not written to disk.
+		
+		=>Uncommitted transactions are not rolled back.
+		
+		=>The instance is terminated without closing the files.
+		
+		=>The database is not closed or dismounted.
 	    
-		=> Any valid user can connect to the database and perform typical data access operations.
-	
-		=> Opening the data files
-		
-		=> Opening the online redo log files
-		
-		=> If any of the data files or online redo log files are not present when you attempt to open the
-		   database, the Oracle server returns an error.
-		
-		=> During this final stage, the Oracle server verifies that all data files and online redo log files can
-		   be opened, and checks the consistency of the database. 
-		
-		=> If necessary, the System Monitor	(SMON) background process initiates instance recovery.
-		
-		=> You can start up a database instance in restricted mode so that only Oracle Database users
-		   with the RESTRICTED SESSION system privilege can connect to the database.
-
-	More Example:
-	If you want to database in read only then execute the command in mounting phase. But to do this you must 
-	restart at mount mode the database instance first. let's see...
-	
-	SQL> alter database open read only;
-	alter database open read only
-	*
-	ERROR at line 1:
-	ORA-01531: a database already open by the instance
-	
-	-So we need to go at mounting phase. To do this we need to shutdown then startup
-	SQL> shutdown immediate
-	
-	SQL> startup mount
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	SQL> alter database open read only;
-
-	Database altered.
-
-	SQL> select OPEN_MODE,LOG_MODE from v$database;
-
-	OPEN_MODE            LOG_MODE
-	-------------------- ------------
-	READ ONLY            NOARCHIVELOG
-
-	SQL> shutdown immediate;
-	Database closed.
-	Database dismounted.
-	ORACLE instance shut down.
-	SQL> startup
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted. 
-	Database opened.
-	
-	- sample....
-	STARTUP NOMOUNT
-	STARTUP MOUNT =>ALTER DATABASE OPEN READ ONLY;
-	STARTUP
-	
-	- RESTRICTED SESSION system privilege
-	
-	-shutdown immediate
-	SQL> shutdown immediate;
-	Database closed.
-	Database dismounted.
-	ORACLE instance shut down.
-
-	-startup
-	SQL> startup
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	Database opened.
+		=>you need to shut down immediately because of an impending situation 
+		  such as notice of a power outage within seconds, earthquake, firesituation.
+		  
+	-LET'S DONW THE DATABASE
 	
 	-create user a
 	SQL> create user a identified by a;
 
 	User created.
 
-	-create user b
-	SQL> create user b identified by b;
-
-	User created.
-
-	-grant create session to a,b
-	SQL> grant create session to a,b;
+	SQL> grant create session to a;
 
 	Grant succeeded.
 
-	-grant restricted session to a
-	SQL> grant restricted session to a;
+	-conn a
+	SQL> conn a/a
+	Connected.
+	SQL> select *from user_tables;
 
-	Grant succeeded.
+	-shutdown abort
+	SQL> shutdown abort
+	ORACLE instance shut down.
+	
+	-Now try to execute any query
+	SQL> SELECT *FROM USER_TABLES;
+	SELECT *FROM USER_TABLES
+				 *
+	ERROR at line 1:
+	ORA-03135: connection lost contact
+	Process ID: 8274
+	Session ID: 288 Serial number: 13365		
+	
+	• N = NORMAL:
+		A normal database shutdown proceeds with the following conditions:
 
-	-shutdown again
-	SQL> shutdown immediate
+		• No new connections can be made.
+
+		• The Oracle server waits for all users to disconnect before completing the shutdown.
+
+		• Database and redo buffers are written to disk.
+
+		• Background processes are terminated and the SGA is removed from memory.
+
+		• The Oracle server closes and dismounts the database before shutting down the instance.
+
+		• The next startup does not require an instance recovery.
+		
+	To expain the normal shutdown, let's follow the below example...
+	-Open the Tracing 
+	[oracle@dba167 ~]$ tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
+
+	-connect user a
+	SQL> conn a/a
+	Connected.
+	SQL> show user
+	USER is "A"
+	
+	-shutdown
+	SQL> shutdown
+
+	Note: Shutdown is in progress, This is because user session exist for user a
+	
+	-If we try to connect a new session by a user it will show below messages..
+	SQL> conn b/b
+	ERROR:
+	ORA-01090: shutdown in progress - connection is not                                                                                        permitted
+	Process ID: 0
+	Session ID: 0 Serial number: 0
+
+
+	Warning: You are no longer connected to ORACLE.
+
+	
+	-Disconnect user a
+	SQL> disconn
+	Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+	Version 19.3.0.0.0
+	
+	-Then we will see the trace file logs for shutting down status and also in shutdown progress status..
+	SQL> shutdown
 	Database closed.
 	Database dismounted.
 	ORACLE instance shut down.
 	
-	-startup restrict
-	SQL> startup restrict
-	ORACLE instance started.
-
-	Total System Global Area 2466249672 bytes
-	Fixed Size                  8899528 bytes
-	Variable Size             536870912 bytes
-	Database Buffers         1912602624 bytes
-	Redo Buffers                7876608 bytes
-	Database mounted.
-	Database opened.
-
-	-connect by a user
-	[oracle@dba167 ~]$ sqlplus a/a
-
-	SQL*Plus: Release 19.0.0.0.0 - Production on Tue Jun 21 18:54:26 2022
-	Version 19.3.0.0.0
-
-	Copyright (c) 1982, 2019, Oracle.  All rights reserved.
-
-
-	Connected to:
-	Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
-	Version 19.3.0.0.0
-
-	SQL> show user
-	USER is "A"
-	
-	-connect by b user
-	[oracle@dba167 ~]$ sqlplus b/b;
-
-	SQL*Plus: Release 19.0.0.0.0 - Production on Tue Jun 21 18:55:32 2022
-	Version 19.3.0.0.0
-
-	Copyright (c) 1982, 2019, Oracle.  All rights reserved.
-
-	ERROR:
-	ORA-01035: ORACLE only available to users with RESTRICTED SESSION privilege
-
-	-Now we will disable the restricted session for all users
-	SQL> alter system disable restricted session;
-
-	System altered.
-	
-	-connect by b user again
-	[oracle@dba167 ~]$ sqlplus b/b
-
-	SQL*Plus: Release 19.0.0.0.0 - Production on Tue Jun 21 18:57:31 2022
-	Version 19.3.0.0.0
-
-	Copyright (c) 1982, 2019, Oracle.  All rights reserved.
-
-
-	Connected to:
-	Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
-	Version 19.3.0.0.0
-	
-	-We can able to enable restricted session on database open mode
-	SQL> alter system enable restricted session;
-
-	System altered.
-	
-	-Note: So user can access to connect with valid credentials
-	
-	
-	-Let's restrict specific user 
-	SQL> select username,sid,serial# from v$session where username is not null
-	SQL> set lines 200 pages 100
-	SQL> col username for a30;
-	SQL> l
-	  1* select username,sid,serial# from v$session where username is not null
-	SQL> /
-
-	USERNAME                              SID    SERIAL#
-	------------------------------ ---------- ----------
-	SYS                                     6      29325
-	B                                      38      20926
-	SYS                                   256      15136
-	SYSRAC                                257      14697
-	A                                     265      32511
-
-	-alter system kill session for user B with SID and SERIAL
-	SQL> alter system kill session '38,20926';
-
-	System altered.
-	
-	-from user B
-	SQL> select *from dual;
-	select *from dual
-	*
-	ERROR at line 1:
-	ORA-00028: your session has been killed
-	
-	-Now we will disable the restricted session for all users again
-	SQL> alter system disable restricted session;
-	
-	-now connect with b user
-	SQL> conn b/b
+	• I = IMMEDIATE:
+		A shutdown in IMMEDIATE mode proceeds with the following conditions:
+		• Current SQL statements being processed by the Oracle database are not completed.
+		
+		• The Oracle server does not wait for the users who are currently connected to the The Oracle server does not wait for the users 
+		  who are currently connected to the database to disconnect.
+		
+		• The Oracle server rolls back active transactions and disconnects all connected users.
+		
+		• The Oracle server closes and dismounts the database before shutting down the instance.
+		
+		• The next startup does not require an instance recovery.
+		
+	-Connect with sys user and perform the following tasks...
+	SQL> conn sys/sys123 as sysdba
 	Connected.
 	
+	SQL> grant resource to a;
 
-##############################################################################
-Shutting Down an Oracle Database Instance
-##############################################################################
+	Grant succeeded.
+
+	SQL> grant create table to a;
+
+	Grant succeeded.
+
+	
+	-Let's connect and create a new table to user a
+	SQL> conn a/a;
+	Connected.
+	SQL> create table testtab(id number, name varchar2(50)) tablespace users;
+
+	Table created.
+
+	
+	-insert data into testtab
+begin
+
+for i in 1..99999
+	insert into testtab values(i,'Test Data...'||i);
+end loop;
+commit;
+end;
+/
+	-now restart and connect with user a and check table data 
+	SQL> startup
+
+	SQL> conn a/a;
+	Connected.
+	SQL> select *from testtab;
+
+	no rows selected
+	
+	-Note: Inserted data rolled back on immediate shutdown.	
 
 
+	• T = TRANSACTIONAL:
+		A transactional database shutdown proceeds with the following conditions:
+		• No client can start a new transaction on this particular instance.
+		
+		• A client is disconnected when the client ends the transaction that is in progress.
+		
+		• When all transactions have been completed, a shutdown occurs immediately.
+		
+		• The next startup does not require an instance recovery
 
+		-insert data into testtab with big amount
+begin
 
+for i in 1..999999
+	insert into testtab values(i,'Test Data...'||i);
+end loop;
+commit;
+end;
+/
+
+	-shutdown transactional
+	SQL> shutdown transactional
+	Database closed.
+	Database dismounted.
+	ORACLE instance shut down.
+
+	
+	
+	-restart database
+	
+	SQL> startup
+	ORACLE instance started.
+
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2365587456 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7868416 bytes
+	Database mounted.
+	Database opened.
+	
+	
+	SQL> conn a/a;
+	Connected.
+	SQL> select count(*) from testtab
+	2  ;
+
+	COUNT(*)
+	----------
+		 999999
+
+	
+	
+
+	
+	
 
 
 
