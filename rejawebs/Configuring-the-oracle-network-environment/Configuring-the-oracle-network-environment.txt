@@ -185,9 +185,194 @@ How to create additional Listener
 	The command completed successfully
 	
 	
+	-Now configure the tns file in client on your machine. Let's do it.
+	 Open the tnsnames.ora file from ../db_home/network/admin/tnsnames.ora and add this snippet..
+	 
+	dba167_vm_1521 =
+	  (DESCRIPTION =
+		(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1521))
+		(CONNECT_DATA =
+		  (SERVER = DEDICATED)
+		  (SERVICE_NAME = dba167)
+		)
+	  )
+
+	  
+	dba167_vm_1522 =
+	  (DESCRIPTION =
+		(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1522))
+		(CONNECT_DATA =
+		  (SERVER = DEDICATED)
+		  (SERVICE_NAME = dba167)
+		)
+	  )
+	  
+    - Now open the cmd and ping the tns by tns name 
+	
+	C:\Users\Reja>tnsping dba167_vm_1522
+
+	TNS Ping Utility for 64-bit Windows: Version 19.0.0.0.0 - Production on 24-JUN-2022 11:56:14
+
+	Copyright (c) 1997, 2019, Oracle.  All rights reserved.
+
+	Used parameter files:
+	D:\Oracle\oracle19c\db_home\network\admin\sqlnet.ora
+
+
+	Used TNSNAMES adapter to resolve the alias
+	Attempting to contact (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1522)) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = dba167)))
+	OK (0 msec)
+	
+	-Now connect the user by cmd
+	C:\Users\Reja>sqlplus a/a@dba167_vm_1522
+
+	SQL*Plus: Release 19.0.0.0.0 - Production on Fri Jun 24 11:57:07 2022
+	Version 19.3.0.0.0
+
+	Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+	Last Successful login time: Fri Jun 24 2022 13:24:39 +06:00
+
+	Connected to:
+	Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+	Version 19.3.0.0.0
+
+	SQL> show user
+	USER is "A"
+	
+	-Let's stop the listener2 by server control
+	[grid@dba167 ~]$ srvctl stop listener -l LIstener2;
+
+	-Now connect user a on cmd
+	SQL> conn a/a@dba167_vm_1522
+	ERROR:
+	ORA-12541: TNS:no listener
+
+
+	Warning: You are no longer connected to ORACLE.
+	
+	-let's add another one like below...
+	dba167_vm =
+	  (DESCRIPTION =
+		(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1521))
+		(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1522))
+		(CONNECT_DATA =
+		  (SERVER = DEDICATED)
+		  (SERVICE_NAME = dba167)
+		)
+	  )
+	
+	-so that we can connect with dba167_vm though port 1522 is not available now.
+	SQL> conn a/a@dba167_vm
+	Connected.
+	
+	-Now we will see how to easy connection or direct connection
+	SQL> conn a/a@192.168.1.10:1521/dba167;
+	Connected.
+	
+	-We can create listener by netca
+	 Open the mobaXterm
+	[grid@dba167 ~]$ netca
+
+	Oracle Net Services Configuration:
+	
+	-Or we can create 
+	[grid@dba167 ~]$ netmgr
+	
+	-after creating the listener3 by netmgr we need to modify 
+	SQL> alter system set LOCAL_LISTENER="
+	(
+		ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1521))
+			         (ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1522))
+					 (ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1523))
+	)";
+	-Check local parameter
+	SQL> show parameter local
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	local_listener                       string
+															(
+																	ADDRESS_LIST=(ADDRESS=(PROTO
+													 COL=TCP)(HOST=192.168.1.10)(PO
+													 RT=1521))
+																					 (ADDRESS=(PROTOCOL
+													 =TCP)(HOST=192.168.1.10)(PORT=
+													 1522))
+															)
+	parallel_force_local                 boolean     FALSE
+	
+	-Now Register the system for listener changes
+	
+	SQL> alter system register;
+
+	System altered.
+		
+	-let's check the listener2 is in service mode
+	
+	[grid@dba167 ~]$ lsnrctl status listener3;
+	
+	[grid@dba167 ~]$ lsnrctl stop listener3;
+	
+	[grid@dba167 ~]$ srvctl add listener -l LISTENER2 -p 1522
+
+	-enable listener
+	[grid@dba167 ~]$ srvctl enable listener -l LISTENER3
+	PRCC-1010 : LISTENER2 was already enabled
+	PRCR-1002 : Resource ora.LISTENER2.lsnr is already enabled
+
+	-start listener
+	[grid@dba167 ~]$ srvctl start listener -l LISTENER3
+	
+	
+	*****************************************************************************
+	Shared Server configuration
+	*****************************************************************************
+	SQL> show parameter shared
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	hi_shared_memory_address             integer     0
+	max_shared_servers                   integer
+	shared_memory_address                integer     0
+	shared_pool_reserved_size            big integer 26004684
+	shared_pool_size                     big integer 0
+	shared_server_sessions               integer
+	shared_servers                       integer     1
+	SQL> show parameter dispaches
+	SQL> show parameter dispatches
+	SQL> show parameter dispa
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	dispatchers                          string      (PROTOCOL=TCP) (SERVICE=dba167
+													 XDB)
+	enable_dnfs_dispatcher               boolean     FALSE
+	max_dispatchers                      integer
+	SQL> show parameter circu
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	circuits                             integer
+	SQL>
+	
+	
+	-So, We will select parameters like
+	max_shared_servers
+	shared_servers
+	max_dispatchers
+	dispatchers
+	circuits
+	
+	
+	
+	
 	
 
-	 
+
+
+
+
 	
 	
 	
