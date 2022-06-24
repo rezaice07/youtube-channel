@@ -1,0 +1,94 @@
+
+Trace file
+------------------------
+-to locate the trace file go to the directory as like below...
+
+[oracle@dba167 trace]$ cd /u01/app/oracle/diag/rdbms/dba167/dba167/trace
+
+--/dba167 {database}/dba167{SID}/
+
+-here we can see the .trc extension those are related to trace file
+
+
+DDL Log
+---------------------------
+01. show parameter enable_ddl_logging
+
+	-enable_ddl_logging 
+	SQL> alter system set enable_ddl_logging=TRUE;
+
+	System altered.
+
+
+	SQL> show parameter enable_ddl_logging;
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	enable_ddl_logging                   boolean     TRUE
+
+	SQL> conn a/a
+	Connected.
+	SQL> create table c (id number, name varchar2(50));
+
+	Table created.
+	
+	-let's locate the ddl log file
+	[oracle@dba167 ddl]$ cd /u01/app/oracle/diag/rdbms/dba167/dba167/log/ddl
+	
+	[oracle@dba167 ddl]$ vi log.xml
+	[oracle@dba167 ddl]$ tail 200f log.xml
+	tail: cannot open â200fâ for reading: No such file or directory
+	==> log.xml <==
+	(id number, name varchar2(50))
+	 </txt>
+	</msg>
+	<msg time='2022-06-24T13:26:16.242+06:00' org_id='oracle' comp_id='rdbms'
+	 msg_id='opiexe:4850:2946163730' type='UNKNOWN' group='diag_adl'
+	 level='16' host_id='dba167.rejawebs.com' host_addr='192.168.1.10'
+	 pid='4757'>
+	 <txt>drop table c
+	 </txt>
+	</msg>
+	
+	
+	SQL> drop table c;
+
+	Table dropped.
+	
+	[oracle@dba167 ddl]$ tail 200f log.xml
+	tail: cannot open â200fâ for reading: No such file or directory
+	==> log.xml <==
+	(id number, name varchar2(50))
+	 </txt>
+	</msg>
+	<msg time='2022-06-24T13:26:16.242+06:00' org_id='oracle' comp_id='rdbms'
+	 msg_id='opiexe:4850:2946163730' type='UNKNOWN' group='diag_adl'
+	 level='16' host_id='dba167.rejawebs.com' host_addr='192.168.1.10'
+	 pid='4757'>
+	 <txt>drop table c
+	 </txt>
+	</msg>
+	
+	-check fixed tables by sys user
+	SQL> conn sys/sys123 as sysdba;
+	
+	SQL> set lines 90
+	SQL> desc v$fixed_table
+	 Name                                            Null?    Type
+	 ----------------------------------------------- -------- ----------------------                                                          ----------
+	 NAME                                                     VARCHAR2(128)
+	 OBJECT_ID                                                NUMBER
+	 TYPE                                                     VARCHAR2(5)
+	 TABLE_NUM                                                NUMBER
+	 CON_ID                                                   NUMBER
+
+	SQL> select Count(*) from v$fixed_table;
+
+	  COUNT(*)
+	----------
+		  2898
+	
+
+
+	
+
