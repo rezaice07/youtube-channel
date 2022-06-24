@@ -118,9 +118,79 @@ How to create additional Listener
 	  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=LISTENER2)))
 	  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=192.168.1.10)(PORT=1522)))
 	The listener supports no services
+	The command completed successfully  
+	
+	-Note: The listener is enabled and online but the listener supports no services.
+		   
+    -How to a listener supports  services of a database
+	 let's add multiple adddress in address list..
+	 
+	alter system set LOCAL_LISTENER="
+	(
+		ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1521))
+			         (ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1522))
+	)";
+	
+	-Check local parameter
+	SQL> show parameter local
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	local_listener                       string
+															(
+																	ADDRESS_LIST=(ADDRESS=(PROTO
+													 COL=TCP)(HOST=192.168.1.10)(PO
+													 RT=1521))
+																					 (ADDRESS=(PROTOCOL
+													 =TCP)(HOST=192.168.1.10)(PORT=
+													 1522))
+															)
+	parallel_force_local                 boolean     FALSE
+	
+	-Now Register the system for listener changes
+	
+	SQL> alter system register;
+
+	System altered.
+		
+	-let's check the listener2 is in service mode
+	
+	[grid@dba167 ~]$ lsnrctl status listener2;
+
+	LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 24-JUN-2022 17:45:34
+
+	Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+	Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER2)))
+	STATUS of the LISTENER
+	------------------------
+	Alias                     LISTENER2
+	Version                   TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+	Start Date                24-JUN-2022 16:36:02
+	Uptime                    0 days 1 hr. 9 min. 32 sec
+	Trace Level               off
+	Security                  ON: Local OS Authentication
+	SNMP                      OFF
+	Listener Parameter File   /u01/app/19.3.0/grid/network/admin/listener.ora
+	Listener Log File         /u01/app/grid/diag/tnslsnr/dba167/listener2/alert/log.xml
+	Listening Endpoints Summary...
+	  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=LISTENER2)))
+	  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=192.168.1.10)(PORT=1522)))
+	  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=dba167.rejawebs.com)(PORT=5500))(Security=(my_wallet_directory=/u01/app/oracle/product/19.3.0/db_1/admin/dba167/xdb_wallet))(Presentation=HTTP)(Session=RAW))
+	Services Summary...
+	Service "dba167" has 1 instance(s).
+	  Instance "dba167", status READY, has 1 handler(s) for this service...
+	Service "dba167XDB" has 1 instance(s).
+	  Instance "dba167", status READY, has 1 handler(s) for this service...
 	The command completed successfully
 	
-	-Note: The listener supports no services
+	
+	
+
+	 
+	
+	
+	
 
 
 	
