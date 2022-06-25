@@ -1,0 +1,119 @@
+
+01. OS Authentication
+
+	-let's create a user named with tushar
+	[oracle@dba167 ~]$ su - root
+	Password:
+	Last login: Sat Jun 25 00:16:58 +06 2022 from 192.168.1.1 on pts/4
+	
+	[root@dba167 ~]# useradd -u 1301 -g oinstall -G dba,asmadmin,asmdba,oper tushar
+	[root@dba167 ~]# passwd tushar
+	Changing password for user tushar.
+	New password:
+	BAD PASSWORD: The password is shorter than 8 characters
+	Retype new password:
+	passwd: all authentication tokens updated successfully.
+	
+	
+	
+	SQL> grant create session to ops$tushar;
+
+	Grant succeeded.
+
+	-let's connect to sqlplus
+	[tushar@dba167 ~]$ sqlplus /
+	bash: sqlplus: command not found...
+	
+	-how to we resolve this issue? Let's configure the environment variable followed by below command....	
+	[tushar@dba167 ~]$ . oraenv
+	ORACLE_SID = [tushar] ? dba167
+	The Oracle base has been set to /u01/app/oracle
+	
+	-let's connect to sqlplus
+	[tushar@dba167 ~]$ sqlplus /
+
+	SQL*Plus: Release 19.0.0.0.0 - Production on Sun Jun 26 00:20:24 2022
+	Version 19.3.0.0.0
+
+	Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+	Connected to:
+	Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+	Version 19.3.0.0.0
+	
+	-so login is done by os authentication
+	
+	-let's check user status
+	SQL> conn sys/sys123 as sysdba
+	Connected.
+	SQL> desc dba_users
+	 Name                                      Null?    Type
+	 ----------------------------------------- -------- ----------------------------
+	 USERNAME                                  NOT NULL VARCHAR2(128)
+	 USER_ID                                   NOT NULL NUMBER
+	 PASSWORD                                           VARCHAR2(4000)
+	 ACCOUNT_STATUS                            NOT NULL VARCHAR2(32)
+	 LOCK_DATE                                          DATE
+	 EXPIRY_DATE                                        DATE
+	 DEFAULT_TABLESPACE                        NOT NULL VARCHAR2(30)
+	 TEMPORARY_TABLESPACE                      NOT NULL VARCHAR2(30)
+	 LOCAL_TEMP_TABLESPACE                              VARCHAR2(30)
+	 CREATED                                   NOT NULL DATE
+	 PROFILE                                   NOT NULL VARCHAR2(128)
+	 INITIAL_RSRC_CONSUMER_GROUP                        VARCHAR2(128)
+	 EXTERNAL_NAME                                      VARCHAR2(4000)
+	 PASSWORD_VERSIONS                                  VARCHAR2(17)
+	 EDITIONS_ENABLED                                   VARCHAR2(1)
+	 AUTHENTICATION_TYPE                                VARCHAR2(8)
+	 PROXY_ONLY_CONNECT                                 VARCHAR2(1)
+	 COMMON                                             VARCHAR2(3)
+	 LAST_LOGIN                                         TIMESTAMP(9) WITH TIME ZONE
+	 ORACLE_MAINTAINED                                  VARCHAR2(1)
+	 INHERITED                                          VARCHAR2(3)
+	 DEFAULT_COLLATION                                  VARCHAR2(100)
+	 IMPLICIT                                           VARCHAR2(3)
+	 ALL_SHARD                                          VARCHAR2(3)
+	 PASSWORD_CHANGE_DATE                               DATE
+
+	SQL> set lines 300 pages 100
+	SQL> col username for a30
+	SQL> select USERNAME,AUTHENTICATION_TYPE,ACCOUNT_STATUS from dba_users where USERNAME = 'OPS$TUSHAR';
+
+	USERNAME                       AUTHENTI ACCOUNT_STATUS
+	------------------------------ -------- --------------------------------
+	OPS$TUSHAR                     EXTERNAL OPEN
+	
+	
+	-Locate  PASSWORD File for sys user
+	[oracle@dba167 dbs]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs
+	
+	[oracle@dba167 dbs]$ ls
+	hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167 
+	
+	[oracle@dba167 dbs]$ mv orapwdba167 orapwdba167__
+	
+	[oracle@dba167 dbs]$ ls
+	hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167__
+	
+	-let's change or create a password file for sys user
+	[oracle@dba167 dbs]$ orapwd file=orapwdba167 password=Abcd_1234
+		
+	-now connect with sys user by client
+	C:\Users\Reja>sqlplus sys/Abcd_1234@dba167_vm as sysdba
+	
+	[oracle@dba167 dbs]$ ls
+	hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167 orapwdba167__
+	
+	-reset the password again
+	[oracle@dba167 dbs]$ rm orapwdba167
+	
+	[oracle@dba167 dbs]$ mv  orapwdba167__ orapwdba167
+	[oracle@dba167 dbs]$ ls
+	hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167
+	
+	-now connect with sys user by client
+	C:\Users\Reja>sqlplus sys/sys123@dba167_vm as sysdba
+	
+
+	
