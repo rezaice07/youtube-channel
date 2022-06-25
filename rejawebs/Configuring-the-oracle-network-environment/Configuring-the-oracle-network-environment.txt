@@ -339,8 +339,8 @@ How to create additional Listener
 	shared_pool_size                     big integer 0
 	shared_server_sessions               integer
 	shared_servers                       integer     1
-	SQL> show parameter dispaches
-	SQL> show parameter dispatches
+	
+	
 	SQL> show parameter dispa
 
 	NAME                                 TYPE        VALUE
@@ -358,11 +358,45 @@ How to create additional Listener
 	
 	
 	-So, We will select parameters like
-	max_shared_servers
-	shared_servers
-	max_dispatchers
-	dispatchers
-	circuits
+	SQL> alter system set max_shared_servers=5;
+	SQL> alter system set shared_servers=2;
+	SQL> alter system set max_dispatchers=3;
+	SQL> alter system set dispatchers='(pro=tcp)(dis=2)';
+	SQL> alter system set circuits=100;
+	
+	- Let's reconfigure the tns in tnsnames.ora on client
+	dba167_vm_shared =
+	  (DESCRIPTION =
+		(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1521))
+		(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.10)(PORT = 1522))
+		(CONNECT_DATA =
+		  (SERVER = SHARED)
+		  (SERVICE_NAME = dba167)
+		)
+    )
+	
+	-Now open the sqlplus (local), sql developer and client cmd to be loggedin followed by 
+	select *from v$session	where username ='A'
+
+	select *from v$session	where username ='SYS'
+	
+	-see the result none for shared and dedicated 
+	 
+	-Now try to shutdown by sys user on client
+	SQL> shutdown
+	ORA-00106: cannot startup/shutdown database when connected to a dispatcher
+	-So sharedly connected user can't be shutdown the database. Only dedicated connection can perform this job.
+	
+	
+	-advantages/disadvantages
+	On dedicated connection, each user process needs separate server process to connect the database.
+	and user can aceess dedicatedly to server and get response very rapidly.
+	
+	On the otherhand, each user process use server process in shared mode. That's why the momory optimized here than dedicated connection.
+	
+	
+	
+	
 	
 	
 	
