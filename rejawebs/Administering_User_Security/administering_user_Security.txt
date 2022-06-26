@@ -116,4 +116,72 @@
 	C:\Users\Reja>sqlplus sys/sys123@dba167_vm as sysdba
 	
 
+	-creating a user with default profile like password expire
+	SQL> create user dba167
+	identified by Dba167_1234
+	default tablespace users
+	temporary tablespace temp
+	profile default
+	password expire
+	/
+	
+	SQL> grant create session to dba167
+	
+	-And after then it will ask to change the password from user profile settings
+	SQL> conn dba167/Dba167_1234
+	ERROR:
+	ORA-12560: TNS:protocol adapter error
+
+
+	Warning: You are no longer connected to ORACLE.
+	SQL> conn dba167/Dba167_1234@dba167_vm
+	ERROR:
+	ORA-28001: the password has expired
+
+
+	Changing password for dba167
+	New password:
+	Retype new password:
+	Password changed
+	Connected.
+	
+	-System Privileges
+	-search on google by : oracle list of system privileges
+	-link: https://docs.oracle.com/database/121/TTSQL/privileges.htm#TTSQL341
+	-let add grant privilege to create table by its own schema.
+	-will will add this one later=> grant create table to dba167;
+	
+	-let add grant privilege to create table by its own schema and other schema also.
+	SQL> grant create any table to dba167;
+	
+	SQL> grant unlimited tablespace to dba167
+	
+	SQL> show user
+	USER is "DBA167"
+	
+	-Now we will create table by its owner and other schema 
+	SQL> create table customer(id number);
+
+	Table created.
+
+	SQL> create table a.a(id number);
+
+	Table created.
+
+
+	-Let's revoke create any table
+	SQL>revoke create any table from dba167
+	
+	SQL> grant create table to dba167;
+	
+	-Now try to to create a table to schema a. and return error.
+	SQL> create table a.sal(id number);
+	create table a.sal(id number)
+	*
+	ERROR at line 1:
+	ORA-01031: insufficient privileges
+	
+	
+	
+	
 	
