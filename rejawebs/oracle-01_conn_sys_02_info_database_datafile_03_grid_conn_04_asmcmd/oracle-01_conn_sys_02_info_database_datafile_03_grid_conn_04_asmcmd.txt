@@ -13,7 +13,7 @@
 	select name
 	from  v$datafile;
 	
-	- Check spfile info
+	- Check spfile (server parameter file) info
 	show paremeter spfile;	
 	
 	NAME                                 TYPE        VALUE
