@@ -6,15 +6,15 @@
 	sqlplus / as sysdba
 
 	- Check database info by sys user
-	select name
-	from  v$database;
+select name	
+from  v$database;
 
 	- Check datafile info by sys user
-	select name
-	from  v$datafile;
+select name
+from  v$datafile;
 	
 	- Check spfile (server parameter file) info
-	show paremeter spfile;	
+	show parameter spfile;	
 	
 	NAME                                 TYPE        VALUE
 	------------------------------------ ----------- ------------------------------

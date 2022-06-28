@@ -3,7 +3,6 @@
 Oracle - Logical and Physical Database Structuress
 ---------------------------------------------------
 
-
 01. Downloading the client software from 
 	https://www.oracle.com/in/database/technologies/oracle19c-windows-downloads.html
 	then select the 	
@@ -15,11 +14,11 @@ Oracle - Logical and Physical Database Structuress
 03. To Ping tns and connect, Open cmd and write 
 	tnsping YOUR_TNS_NAME
 	
-04. To check the cluster ready service (crs) resources
+04. To check the cluster ready service (crsctl) resources
 	-Switch back to grid user then run following command
 	crsctl stat res -t
 
-05. To check server control utility use the following command
+05. To check server control utility (srvctl) use the following command
 	srvctl status listener -l Your_Lister_Name
 	
 	-Output:
@@ -40,12 +39,21 @@ Oracle - Logical and Physical Database Structuress
 	lsnrctl status
 	
 	-Now connect with tns by cmd in windows
-	sqlplus sys/sys123@RHEL_VM_GRID_ASM_ORA_DBA167 as sysdba;
+	sqlplus sys/sys123@dba167_vm as sysdba;
+	
+	To start listener
+	srvctl start listener -l Your_Lister_Name
 	
 	-to show parameter for grid user
 	show parameter local
 	
 07. Creating tablespace with datafile, size and autoextend on;
+
+before creating the tablespace, let's drop the existing tablespace if exist.
+DROP TABLESPACE DBA167TAB1 
+INCLUDING CONTENTS 
+CASCADE CONSTRAINTS; 
+
 create tablespace dba167tab1
 datafile '+DATA/DBA167/DATAFILE/dba167tab1'
 size 10M
@@ -99,6 +107,25 @@ WHERE SEGMENT_NAME=UPPER('dba167_info'); --TABLE TABLE
 
 -Here we can see the extends and block size increased.
 
+Keys: 
+Oracle - Logical and Physical Database Structuress,
+Oracle - Downloading the client software,
+Oracle - To Ping tns and connect, Open cmd and write 
+Oracle - To check the cluster ready service (crsctl) resources
+Oracle - To check server control utility (srvctl) use the following command
+Oracle - To stop listener
+Oracle - lsnrctl status
+Oracle - Now connect with tns by cmd in windows
+Oracle - show parameter local
+Oracle - Creating tablespace with datafile, size and autoextend on;
+Oracle - DROP TABLESPACE DBA167TAB1 
+Oracle - Checking Segments
+Oracle - desc dba_segments;
+
+
+You can check the content of link of this tutorial in description. 
+hope you guys enjoy this tutorial.
+Thanks for watching.
 
 
 	
