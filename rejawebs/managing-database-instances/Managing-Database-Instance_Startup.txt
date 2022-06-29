@@ -305,9 +305,6 @@ Starting Up an Oracle Database Instance
 	Connected.
 	
 
-##############################################################################
-Shutting Down an Oracle Database Instance
-##############################################################################
 
 
 
