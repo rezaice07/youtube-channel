@@ -50,7 +50,7 @@ Note: if value is not blank the file location and file name with spf, indicates 
 	4 -rw-r-----.  1 oracle asmadmin   24 Jun  7 06:42 lkDBA167
 	4 -rw-r-----.  1 oracle oinstall 2048 Jun  7 06:45 orapwdba167
 	
-	- Remove the init.ora file
+	- Remove the initdba167.ora file
 	rm initdba167.ora
 	
 	-Now create pfile from spfile
