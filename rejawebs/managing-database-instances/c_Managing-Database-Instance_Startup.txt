@@ -59,10 +59,7 @@ Starting Up an Oracle Database Instance
 	STATUS
 	------------
 	MOUNTED
-	
-	
-
-	
+		
 04. Open
 	-Let's open the database instance
 	
