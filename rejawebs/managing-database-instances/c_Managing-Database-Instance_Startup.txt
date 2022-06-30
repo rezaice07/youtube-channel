@@ -35,7 +35,7 @@ Starting Up an Oracle Database Instance
 		=> our database instance is created by reading the spfile file.
 		=> Allocating the SGA
 		=> Starting the backgound Processes
-		=>Opening the alert<SID>.ora and the trace file
+		=> Opening the alert<SID>.ora and the trace file
 	
 03. Mount
 
@@ -300,6 +300,10 @@ Starting Up an Oracle Database Instance
 	-now connect with b user
 	SQL> conn b/b
 	Connected.
+	
+	
+	
+	
 	
 
 
