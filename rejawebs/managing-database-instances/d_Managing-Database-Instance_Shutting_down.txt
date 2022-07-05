@@ -1,7 +1,7 @@
 
 
 Oracle - Managing the Database Instance Shutting Down
----------------------------------------------------
+-----------------------------------------------------
 - Shutdown modes:	
 	• I = IMMEDIATE
 	• T = TRANSACTIONAL
@@ -104,13 +104,14 @@ Oracle - Managing the Database Instance Shutting Down
 	-insert data into testtab
 begin
 
-for i in 1..99999 loop
+for i in 1..9999999 loop
 	insert into testtab values(i,'Test Data...'||i);
 end loop;
 commit;
 end;
 /
-	-now restart and connect with user a and check table data 
+	-now shutdown immediate and connect with user a and check table data
+	SQL> shutdown immediate
 	SQL> startup
 
 	SQL> conn a/a;
@@ -166,8 +167,8 @@ end;
 	
 	SQL> conn a/a;
 	Connected.
-	SQL> select count(*) from testtab
-	2  ;
+	SQL> select count(*) from testtab;
+
 
 	COUNT(*)
 	----------
@@ -204,15 +205,6 @@ end;
 		  
 	-LET'S DONW THE DATABASE
 	
-	-create user a
-	SQL> create user a identified by a;
-
-	User created.
-
-	SQL> grant create session to a;
-
-	Grant succeeded.
-
 	-conn a
 	SQL> conn a/a
 	Connected.
@@ -232,13 +224,7 @@ end;
 	Session ID: 288 Serial number: 13365
 	
 	-Another Example to insert data into table
-	
-	-open alert file 
-	[oracle@dba167 ~]$ tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
-	
-	-connect user a
-	[oracle@dba167 ~]$ sqlplus a/a
-	
+		
 	-truncate table testtab
 	SQL> truncate table testtab;
 
