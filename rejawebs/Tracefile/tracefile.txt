@@ -5,7 +5,7 @@ Trace file
 
 [oracle@dba167 trace]$ cd /u01/app/oracle/diag/rdbms/dba167/dba167/trace
 
---/dba167 {database}/dba167{SID}/
+--/dba167 {SID}/dba167{Database}/
 
 -here we can see the .trc extension those are related to trace file
 
