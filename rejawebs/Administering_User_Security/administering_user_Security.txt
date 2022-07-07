@@ -174,7 +174,7 @@
 	
 	SQL> grant create table to dba167;
 	
-	-Now try to to create a table to schema a. and return error.
+	-Now try to do create a table to schema a. and return error.
 	SQL> create table a.sal(id number);
 	create table a.sal(id number)
 	*

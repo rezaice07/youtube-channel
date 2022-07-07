@@ -308,13 +308,13 @@ How to create additional Listener
 
 	System altered.
 		
-	-let's check the listener2 is in service mode
+	-let's check the listener3 is in service mode
 	
 	[grid@dba167 ~]$ lsnrctl status listener3;
 	
 	[grid@dba167 ~]$ lsnrctl stop listener3;
 	
-	[grid@dba167 ~]$ srvctl add listener -l LISTENER2 -p 1522
+	[grid@dba167 ~]$ srvctl add listener -l LISTENER3 -p 1523
 
 	-enable listener
 	[grid@dba167 ~]$ srvctl enable listener -l LISTENER3
