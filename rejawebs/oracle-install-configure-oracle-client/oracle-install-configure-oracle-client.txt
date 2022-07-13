@@ -1,6 +1,6 @@
 
 
-Oracle - Logical and Physical Database Structuress
+Oracle - Installing and Configuring the oracle Client
 ---------------------------------------------------
 
 01. Downloading the client software from 
