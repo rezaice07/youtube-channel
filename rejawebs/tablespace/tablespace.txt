@@ -95,10 +95,33 @@ Tablespace may be
 	-resizing datafile by 
 	alter database datafile '+DATA/DBA167/DATAFILE/TestTab401.dbf' resize 30MB;
 	
+	--tablespace by default a user
+	SQL> alter user A default tablespace TestTab4
+		
+	-tablespace by unlimited grant privilege
+	SYS: SQL> grant unlimited tablespace to A
 	
-	--So that, Tablespace access by user
+	-let's create a table by user A
+	A:SQL> create table a.t3(id number ) tablespace TestTab4;
+	
+	A:SQL>insert into a.t3 values(1);
+	
+	A:SQL>Commit;
+	
+	--User also can access to another tablespace by QUOTA	
+	SYS: SQL>revoke unlimited tablespace to A	
+	SYS: SQL>alter user A QUOTA 10M on Testtab2;
+	
+	-let's create a table by user A
+	A:SQL> create table t2(id number ) tablespace Testtab2;
+	
+	A:SQL>insert into t2 values(1);
+	
+	A:SQL>Commit;
+	
+	--So that, Tablespace accessed by user
 		-default tablespace
-		-By Quoto permission.
+		-By Quota permission.
 		
 UNDO Tablespace
 ###############
@@ -166,6 +189,52 @@ alter database default temporary tablespace TESTTEMP
 now check again 
 SQL>select *from database_properties 
 where PROPERTY_NAME='DEFAULT_TEMP_TABLESPACE';
+
+
+-dropping tablespace
+-let's create a new tablespace
+SYS: SQL> create tablespace tabsp
+
+-to drop empty or fresh tablespace
+SYS: SQL> DROP TABLESPACE 
+
+-If you have contents like table or table data
+SYS: SQL> create tablespace tabsp
+SYS: SQL> alter user A QUOtA 10M on tabsp;
+
+A: SQL>create table testTable(id number) tablespace tabsp;
+
+A: SQL>insert into testTable values(1);
+
+A: SQL>commit;
+
+SYS: SQL> drop tablespace tabsp;
+
+-it will show error messages. So we can resolve this issue by using
+SYS: SQL> drop tablespace tabsp INCLUDING CONTENTS and datafiles;
+
+
+Relocating/Remaning an online datafile
+########################################
+
+SYS: SQL> select *from v$datafile;
+
+--make directory to 
+ASMCMD> cd +FRA/DBA167/
+ASMCMD> mkdir DATAFILE
+
+
+SQL> alter database move datafile '+DATA/DBA167/DATAFILE/testtab401.dbf' to '+FRA/DBA167/DATAFILE/testtab401.dbf';
+
+Database altered.
+
+
+Copying a datafile from a file system to ASM
+############################################
+--make directory to FRA/DBA167/Backup_DATAFILE
+mkdir FRA/DBA167/Backup_DATAFILE
+alter database move datafile '+DATA/DBA167/DATAFILE/testundo.dbf' to '+FRA/DBA167/Backup_DATAFILE/testundo.dbf' KEEP;
+
 
 
 
