@@ -1,0 +1,49 @@
+
+
+select name from v$datafile;
+
+
+create tablespace resumeTab datafile '+DATA/DBA167/DATAFILE/resumeTab01.dbf' size 2M;
+
+
+alter user a quota unlimited on resumeTab
+
+
+create table 
+resumeTab (id number , name varchar2(50)) tablespace resumeTab;
+
+
+begin
+for i in 1..99999 loop
+
+insert into resumeTab values(i,'Test Data..'||i)
+
+end loop;
+commit;
+end;
+/
+
+grant sesion resumable to a
+
+alter session enable resumable;
+
+
+tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
+
+begin
+for i in 1..99999 loop
+
+insert into resumeTab values(i,'Test Data..'||i)
+
+end loop;
+commit;
+end;
+/
+
+
+
+
+
+
+
+
