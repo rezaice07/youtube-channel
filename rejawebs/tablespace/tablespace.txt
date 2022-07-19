@@ -272,14 +272,11 @@ SQL> select distinct segment_type from dba_segments;
 Shrinking Database
 ##################
 
+-let's create a big table from dba_objects
+SQL> create table a.big as select *from dba_objects
 
-create table a.big as select *from dba_objects
-
+-Now we will observe segment for segment BIG
 select *From dba_segments where owner='A' and segment_name='BIG'
-
-create table a.big as select *from dba_objects;
-
-select *From dba_segments where owner='A' and segment_name='BIG';
 
 select segment_name,bytes, bytes/1024/1024 MB From dba_segments where owner='A' and segment_name='BIG'
 
@@ -289,20 +286,31 @@ delete from a.big where owner='SYS'
 
 commit;
 
+--Now see the status of BIG segemtn after deleting data.
 select segment_name,bytes, bytes/1024/1024 MB From dba_segments where owner='A' and segment_name='BIG';
+--but no segment space declined.
 
+--now check ROW_MOVEMENT status for BIG table
 select dt.ROW_MOVEMENT  from dba_tables dt where table_name='BIG';
 
+--now enable row movement for big table
 alter table a.big enable row movement;
+
+--note: if we don't have enable row movement it will show an error while executing below lines
 --shrink table:
 alter table a.big shrink space compact;
 
+-Now we will observe segment for segment BIG
 select segment_name,bytes, bytes/1024/1024 MB From dba_segments where owner='A' and segment_name='BIG';
 
---free space move left right but high water mark will 
+--no change made
+--Now will execute below lines to shrink table space
 alter table a.big shrink space;
 
+-let's disable row movement
 alter table a.big disable row movement;
+
+
 
 
 --generating script for shrinking database tables
