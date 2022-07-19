@@ -9,21 +9,25 @@ create tablespace resumeTab datafile '+DATA/DBA167/DATAFILE/resumeTab01.dbf' siz
 alter user a quota unlimited on resumeTab
 
 
-create table 
-resumeTab (id number , name varchar2(50)) tablespace resumeTab;
+create table resumeTab (id number , name varchar2(50)) tablespace resumeTab;
 
 
 begin
 for i in 1..99999 loop
 
-insert into resumeTab values(i,'Test Data..'||i)
+insert into resumeTab values(i,'Test Data..'||i);
 
 end loop;
 commit;
 end;
 /
 
-grant sesion resumable to a
+--Error
+ERROR at line 1:
+ORA-01653: unable to extend table A.RESUMETAB by 128 in tablespace RESUMETAB
+ORA-06512: at line 4
+
+ALTER SYSTEM SET RESUMABLE_TIMEOUT=7200;
 
 alter session enable resumable;
 
@@ -33,12 +37,40 @@ tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
 begin
 for i in 1..99999 loop
 
-insert into resumeTab values(i,'Test Data..'||i)
+insert into resumeTab values(i,'Test Data..'||i);
 
 end loop;
 commit;
 end;
 /
+
+
+-let's check user A resumable status
+SQL> select name, sql_text from USER_RESUMABLE;
+
+NAME
+--------------------------------------------------------------------------------
+SQL_TEXT
+--------------------------------------------------------------------------------
+User A(110), Session 18, Instance 1
+INSERT INTO RESUMETAB VALUES(:B1 ,'Test Data..'||:B1 )
+
+
+
+
+SYS: SQL> alter database datafile '+DATA/DBA167/DATAFILE/resumeTab01.dbf' resize 20M;
+
+Database altered.
+
+
+-SQL statement executed successfully
+PL/SQL procedure successfully completed.
+
+-and observe the trace file logs..
+
+
+
+
 
 
 
