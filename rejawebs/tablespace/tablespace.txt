@@ -236,6 +236,174 @@ mkdir FRA/DBA167/Backup_DATAFILE
 alter database move datafile '+DATA/DBA167/DATAFILE/testundo.dbf' to '+FRA/DBA167/Backup_DATAFILE/testundo.dbf' KEEP;
 
 
+Block space Management
+######################
+
+When we create a table, pctfree = 10 means by default 10 % space will free of total full block space.
+So this 10 % block space never be used for insert purpose but can be used for update purpose.
+
+let's see in the creation script..
+DROP TABLE A.A CASCADE CONSTRAINTS;
+
+CREATE TABLE A.A
+(
+  ID  NUMBER
+)
+TABLESPACE USERS
+PCTFREE    10
+INITRANS   1
+MAXTRANS   255
+STORAGE    (
+            PCTINCREASE      0
+            BUFFER_POOL      DEFAULT
+           )
+LOGGING 
+NOCOMPRESS 
+NOCACHE;
+
+Type of Segments
+################
+Segments are dynamacally allocated by the oracle database server
+
+let's check segment types
+SQL> select distinct segment_type from dba_segments;
+
+
+Shrinking Database
+##################
+
+
+create table a.big as select *from dba_objects
+
+select *From dba_segments where owner='A' and segment_name='BIG'
+
+create table a.big as select *from dba_objects;
+
+select *From dba_segments where owner='A' and segment_name='BIG';
+
+select segment_name,bytes, bytes/1024/1024 MB From dba_segments where owner='A' and segment_name='BIG'
+
+select count(*) from a.big;
+
+delete from a.big where owner='SYS'
+
+commit;
+
+select segment_name,bytes, bytes/1024/1024 MB From dba_segments where owner='A' and segment_name='BIG';
+
+select dt.ROW_MOVEMENT  from dba_tables dt where table_name='BIG';
+
+alter table a.big enable row movement;
+--shrink table:
+alter table a.big shrink space compact;
+
+select segment_name,bytes, bytes/1024/1024 MB From dba_segments where owner='A' and segment_name='BIG';
+
+--free space move left right but high water mark will 
+alter table a.big shrink space;
+
+alter table a.big disable row movement;
+
+
+--generating script for shrinking database tables
+select 'alter table '||owner||'.'||table_name||' enable row movement;'
+from dba_tables
+where owner='A';
+
+--output
+alter table A.A enable row movement;
+alter table A.BIG enable row movement;
+alter table A.TESTTAB enable row movement; 
+
+select 'alter table '||owner||'.'||table_name||' shrink space compact;'
+from dba_tables
+where owner='A';
+
+--output
+alter table A.A shrink space compact;
+alter table A.BIG shrink space compact;
+alter table A.TESTTAB shrink space compact;
+
+
+select 'alter table '||owner||'.'||table_name||' shrink space;'
+from dba_tables
+where owner='A';
+
+--output
+alter table A.A shrink space;
+alter table A.BIG shrink space;
+alter table A.TESTTAB shrink space;
+
+
+select 'alter table '||owner||'.'||table_name||' disable row movement;'
+from dba_tables
+where owner='A';
+
+--output
+alter table A.A disable row movement;
+alter table A.BIG disable row movement;
+alter table A.TESTTAB disable row movement;
+
+
+--Let's run the script
+set lines 400 pages 100
+set scho on 
+set feedback on 
+spool shrinkObjects.spl
+
+alter table A.A enable row movement;
+alter table A.BIG enable row movement;
+alter table A.TESTTAB enable row movement; 
+
+alter table A.A shrink space compact;
+alter table A.BIG shrink space compact;
+alter table A.TESTTAB shrink space compact;
+
+alter table A.A shrink space;
+alter table A.BIG shrink space;
+alter table A.TESTTAB shrink space;
+
+alter table A.A disable row movement;
+alter table A.BIG disable row movement;
+alter table A.TESTTAB disable row movement;
+
+spool off
+exit
+
+[oracle@dba167]$ mkdir scripts
+[oracle@dba167]$ cd scripts
+[oracle@dba167 scripts]$ vi ShrinkObjects.txt
+--then copy and paste the above scripts and save it on vi mode
+
+-now execute the script
+[oracle@dba167 scripts]$ sqlplus / as sysdba @ShrinkObjects.txt
+
+[oracle@dba167 scripts]$ ls -larth
+total 16K
+-rw-r--r--.  1 oracle oinstall  560 Jul 19 14:40 ShrinkObjects.txt
+-rw-r--r--.  1 oracle oinstall 4.0K Jul 19 14:40 .ShrinkObjects.txt.swp
+drwx------. 20 oracle oinstall 4.0K Jul 19 14:40 ..
+drwxr-xr-x.  2 oracle oinstall   86 Jul 19 15:09 .
+-rw-r--r--.  1 oracle oinstall  204 Jul 19 15:09 shrinkObjects.spl
+
+--lets see the logs
+[oracle@dba167 scripts]$ vi shrinkObjects.spl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
