@@ -1,0 +1,121 @@
+
+
+Database Auditing:
+
+-let's check the unified auditing info by 
+SQL Dev : 
+select *from v$option
+where parameter = 'Unified Auditing';
+
+--Output: Unified Auditing	TRUE	0
+
+Unified Audit Enable Process:
+1. SQL> SHUTDOWN IMMEDIATE
+2. grid: lsnrctl stop
+3. login with oracle user and use the following commands...
+	cd $ORACLE_HOME/rdbms/lib
+	make -f ins_rdbms.mk uniaud_on ioracle ORACLE_HOME=$ORACLE_HOME
+4. lsnrctl start
+5. STARTUP 
+
+
+-let's check the unified auditing info by 
+SQL Dev : 
+select *from v$option
+where parameter = 'Unified Auditing';
+
+--Output: Unified Auditing	TRUE	0
+
+Configuring Audit Policy:
+------------------------
+
+--audit_unified_enabled_policies info
+SELECT * FROM audit_unified_enabled_policies;
+
+Output:
+ORA_SECURECONFIG	BY USER	ALL USERS	USER	YES	YES
+ORA_LOGON_FAILURES	BY USER	ALL USERS	USER	NO	YES
+
+Disable Audit Policy
+#######################
+NOAUDIT POLICY ORA_SECURECONFIG ;
+NOAUDIT POLICY ORA_LOGON_FAILURES ;
+
+Finally Drop Audit Policy
+###########################
+DROP AUDIT POLICY ORA_SECURECONFIG ;
+DROP AUDIT POLICY ORA_LOGON_FAILURES ;
+
+
+--check audit_unified_enabled_policies
+SELECT * FROM audit_unified_enabled_policies;
+
+--let's create audit policy
+
+CREATE AUDIT POLICY DBA167_ACTION_AUDIT_POLICY 
+ACTIONS 
+ALTER FUNCTION,
+ALTER PACKAGE,
+ALTER PACKAGE BODY,
+ALTER PROCEDURE,
+ALTER SYSTEM,
+ALTER USER,
+ALTER TABLE,
+CREATE FUNCTION,
+CREATE PACKAGE,
+CREATE PACKAGE BODY,
+CREATE PROCEDURE,
+CREATE USER,
+CREATE TABLE,
+DROP TABLE,
+DROP FUNCTION,
+DROP PACKAGE,
+DROP PACKAGE BODY, 
+DROP PROCEDURE,
+DROP ROLE,
+DROP TRIGGER,
+DROP USER,
+LOGOFF,
+LOGON
+/
+
+-let's enable audit policy
+
+SQL> AUDIT POLICY DBA167_ACTION_AUDIT_POLICY ;
+
+
+--check audit policy
+SQL> select * from audit_unified_policies 
+where policy_name in (select policy_name 
+					 from audit_unified_enabled_policies) 
+order by policy_name, audit_option;
+
+
+--check on audit trail
+SQL> select * from UNIFIED_AUDIT_TRAIL;
+
+
+connect hr
+
+SQL> conn hr/hr
+Connected.
+SQL> create table testaud (id number ,name varchar2(50));
+
+Table created.
+
+SQL> alter table testaud add dob date;
+
+Table altered.
+
+SQL> drop table testaud;
+
+Table dropped.
+
+
+--check on audit trail
+SQL> select * from UNIFIED_AUDIT_TRAIL
+where dbusername='HR'
+order by EVENT_TIMESTAMP desc;
+
+
+
