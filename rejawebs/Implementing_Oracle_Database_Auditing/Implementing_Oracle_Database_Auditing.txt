@@ -7,7 +7,7 @@ SQL Dev :
 select *from v$option
 where parameter = 'Unified Auditing';
 
---Output: Unified Auditing	TRUE	0
+--Output: Unified Auditing	FALSE	0
 
 Unified Audit Enable Process:
 1. SQL> SHUTDOWN IMMEDIATE
@@ -117,5 +117,176 @@ SQL> select * from UNIFIED_AUDIT_TRAIL
 where dbusername='HR'
 order by EVENT_TIMESTAMP desc;
 
+--create a tablespace for audit
+CREATE TABLESPACE AUDITTAB DATAFILE SIZE 200M;
+
+--let's set this above tablespace to audit_trail_location_value
+BEGIN
+DBMS_AUDIT_MGMT.set_audit_trail_location(
+audit_trail_type => DBMS_AUDIT_MGMT.AUDIT_TRAIL_AUD_STD,
+audit_trail_location_value => 'AUDITTAB');
+END;
+/
 
 
+--let's check 'AUD$', 'FGA_LOG$' tables for tablespace
+select table_name, tablespace_name from dba_tables where table_name in ('AUD$', 'FGA_LOG$')
+
+
+--but fga audit not going to AUDITTAB. let's do that one...
+BEGIN
+DBMS_AUDIT_MGMT.set_audit_trail_location(
+audit_trail_type => DBMS_AUDIT_MGMT.AUDIT_TRAIL_FGA_STD,
+audit_trail_location_value => 'AUDITTAB');
+END;
+/
+
+--let's check 'AUD$', 'FGA_LOG$' tables for tablespace
+select table_name, tablespace_name from dba_tables where table_name in ('AUD$', 'FGA_LOG$')
+
+AUDIT PURGE
+###############
+
+delete for specific Audit records
+##################################
+select count(*) from unified_audit_trail;
+
+--pointer set to delete all except last 30 days
+exec dbms_audit_mgmt.set_last_archive_timestamp(audit_trail_type=>dbms_audit_mgmt.audit_trail_unified,last_archive_time=>sysdate-30); --delete all except last 30 days
+
+--this is delete operation
+exec dbms_audit_mgmt.clean_audit_trail(audit_trail_type=>dbms_audit_mgmt.audit_trail_unified,use_last_arch_timestamp=>TRUE);
+
+delete All Audit records
+##################################
+select count(*) from unified_audit_trail;
+exec DBMS_AUDIT_MGMT.CLEAN_AUDIT_TRAIL(audit_trail_type=>DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,use_last_arch_timestamp=>FALSE);--Delete All audit record from unified
+select count(*) from unified_audit_trail;
+
+
+Value Based Audit
+###################
+
+Trigger
+########
+
+Trigger?
+
+Trigger Type
+############
+  Database Trigger
+  Application Trigger
+
+Database Trigger
+#################
+    Statement Trigger
+    Row Trigger
+    Instead of trigger (Based on View only)
+
+
+Trigger Timing (Before / After)
+Trigger Event
+   DML- INSERT, UPDATE, DELETE
+   SYSTEM- LOGON, LOGOFF, SHUTDOWN, STARTUP , SERVERERROR
+   DDL EVENT- DROP, ALTER , CREATE ETC
+Trigger Object
+   - TABLE, view
+TRIGGER BODY
+
+
+create or replace trigger emp_protect_trigg
+before insert or update or delete on hr.employees
+begin
+ if to_char(sysdate,'Dy') ='Sat' then
+  raise_application_error(-20001,'Today is holiday, so you can''t able to DML on Employees Table...');
+end if;
+end;
+/
+
+
+date -s "15 JUL 2022 18:42:00"
+
+--let's create a trigger for value based
+create or replace trigger emp_protect_trigg
+before insert or update or delete on hr.employees
+for each row
+begin
+ if to_char(sysdate,'Dy') ='Sat' then
+  raise_application_error(-20001,'Today is holiday, so you can''t able to DML on Employees Table...');
+end if;
+end;
+/
+
+
+create table hr.emp
+(id number,
+name varchar2(30),
+sal number
+)
+/
+
+create table sys.emp_logg
+(
+newid number,
+oldid number,
+newname varchar2(30),
+oldname varchar2(30),
+newsal number,
+oldsal number,
+accuser varchar2(30),
+acctime timestamp(2),
+accterminal varchar2(30)
+)
+/
+
+
+
+create or replace trigger sys.emp_aud_trigg
+after insert or update or delete on hr.emp
+for each row
+begin
+insert into sys.emp_logg
+values(
+:new.id,
+:old.id,
+:new.name,
+:old.name,
+:new.sal,
+:old.sal,
+user,
+sysdate,
+SYS_CONTEXT ('USERENV', 'IP_ADDRESS') 
+);
+end;
+/
+
+
+
+FGA (Fine-Grained Auditing)
+-------------------------
+
+begin
+dbms_fga.add_policy (
+ object_schema	=> 	'HR',
+ object_name		=> 	'EMPLOYEES',
+ policy_name	=> 	'audit_emps_salary',
+ audit_condition=>	'department_id=10',
+ audit_column 	=> 'SALARY,COMMISSION_PCT',
+ handler_schema	=> 	'secure',
+ handler_module	=> 	'log_emps_salary',
+ enable			=> 	TRUE,
+ statement_types =>	'SELECT,UPDATE');
+end;
+/
+
+
+BEGIN
+  DBMS_FGA.add_policy(
+    object_schema   => 'HR',
+    object_name     => 'EMPLOYEES',
+    policy_name     => 'SALARY_CHK_AUDIT2',
+    audit_condition => 'SALARY > 10000',
+    audit_column    => 'SALARY'),
+	statement_types =>	'SELECT,UPDATE');
+END;
+/
