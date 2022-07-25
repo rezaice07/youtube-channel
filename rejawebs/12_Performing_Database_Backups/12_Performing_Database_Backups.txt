@@ -1,0 +1,75 @@
+
+Flashback Technology
+#######################
+Use Flashback technology for:
+  Viewing past states of data
+  Winding data back and forth in time
+  Assisting users in error analysis and recovery
+
+--LET'S create a table with the name of EMP
+create table HR.EMP as select * from hr.EMPLOYEES WHERE EMPLOYEE_ID=100;
+
+--recyclebin
+DESC RECYCLEBIN;
+
+--  Now we will drop the table EMP
+DROP TABLE HR.EMP;
+
+--LET'S SEE IN RECYCLEBIN
+SELECT *
+FROM RECYCLEBIN;
+
+--FLASHBACK TABLE
+FLASHBACK TABLE HR.EMP TO BEFORE DROP;
+
+--NOTE: BEFORE DROP MEANS TABLE DATA WILL BE REMAIN BEFORE DROP THE TABLE
+
+--LET'S SEE IN RECYCLEBIN
+SELECT *
+FROM RECYCLEBIN;
+
+--NOW CHECK TABLE WITH DATA
+SELECT *
+FROM HR.EMP;
+
+--HOW TO FLASHBACK BY RECYCLEBIN OBJECT NAME 
+--LET'S DROP A TABLE  
+DROP TABLE HR.EMP;
+
+--LET'S SEE IN RECYCLEBIN
+SELECT *
+FROM RECYCLEBIN;
+
+FLASHBACK TABLE "BIN$5J4bZu6JFWvgUwoBqMDMdQ==$0" TO BEFORE DROP RENAME TO HR.EMP_PREV
+--IF YOU HAVE THE SAME TABLE IN DATABASE, SO WE CAN RENAME TO
+
+--NOW CHECK TABLE WITH DATA
+SELECT *
+FROM HR.EMP_PREV;
+
+
+--Check the database is flashback enabled or not
+SYS:SQL> SELECT FLASHBACK_ON FROM V$DATABASE;
+
+FLASHBACK_ON
+------------------
+NO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
