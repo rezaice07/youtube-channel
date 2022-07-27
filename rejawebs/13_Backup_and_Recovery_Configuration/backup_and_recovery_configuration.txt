@@ -1,0 +1,274 @@
+
+
+Backup and Recovery Configuration
+##################################
+
+--check archive status
+SQL> archive log list
+Database log mode              No Archive Mode
+Automatic archival             Disabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     98
+Current log sequence           100
+
+--Check reco param info
+SQL> show parameter db_reco
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      +FRA
+db_recovery_file_dest_size           big integer 8256M
+
+--if we want to change the recover file des size. If we have FRA 10GB but the db_recovery_file_dest_size value is the max size of recovery.
+SQL> alter system set db_recovery_file_dest_size=10G;
+
+System altered.
+
+SQL> show parameter db_reco;
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      +FRA 
+db_recovery_file_dest_size           big integer 10G
+
+--now the the size of db_recovery_file_dest_size is 10G
+
+
+--Check controlfile location
+SQLDEV : select name from v$controlfile;
++DATA/DBA167/CONTROLFILE/current.261.1107575907	
++FRA/DBA167/CONTROLFILE/current.256.1107575907	
+
+--let's see the control file from asm
+
+--for +DATA location
+[grid@dba167 ~]$ asmcmd
+ASMCMD> cd +DATA/DBA167/CONTROLFILE/
+ASMCMD> ls
+Current.261.1107575907
+
+--for +FRA location
+ASMCMD> cd +FRA/DBA167/CONTROLFILE/
+ASMCMD> ls
+Current.256.1107575907
+
+--so question is here . why we do need to location for control file.
+--Ans is if the any one of the data is damaged then the other one can be used to overcome.
+
+--let's add more control file in both data and fra location...
+SQL> ALTER SYSTEM SET CONTROL_FILES=
+        '+DATA/DBA167/CONTROLFILE/current.261.1107575907',
+        '+FRA/DBA167/CONTROLFILE/current.256.1107575907',
+        '+DATA/DBA167/CONTROLFILE/current03.ctl',
+        '+FRA/DBA167/CONTROLFILE/current04.ctl' SCOPE=SPFILE;  2    3    4    5
+
+System altered.
+
+--note: this above statement is static that's for reason the SCOPE value is SPFILE
+
+--now check parameter value for control file
+SQL> show parameter control_files;
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+control_files                        string      +DATA/DBA167/CONTROLFILE/current.261.1107575907, 
+												 +FRA/DBA167/CONTROLFILE/current.256.1107575907
+												 
+												 
+												 
+SQLDEV: select *from v$controlfile;
+select *from v$controlfile;
++DATA/DBA167/CONTROLFILE/current.261.1107575907	NO	16384	646	0
++FRA/DBA167/CONTROLFILE/current.256.1107575907	YES	16384	646	0
+
+--note: no changes made. So we need a immediate shutdown and startup
+--shutdown
+SQL> shutdown immediate;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+
+--startup
+SQL> startup;
+ORACLE instance started.
+
+Total System Global Area 4294963272 bytes
+Fixed Size                  8904776 bytes
+Variable Size            2399141888 bytes
+Database Buffers         1879048192 bytes
+Redo Buffers                7868416 bytes
+ORA-00205: error in identifying control file, check alert log for more info
+
+--We have seen an error while starting up like
+ORA-00205: error in identifying control file, check alert log for more info
+
+This means control file issue. cause we don't have available as the configuration of spfile or pfile.
+So, let's create the control file to both of the location
+
+
+[oracle@dba167 ~]$ su - grid
+Password:
+Last login: Tue Jul 26 14:08:26 +06 2022 from 192.168.1.1 on pts/1
+
+[grid@dba167 ~]$ asmcmd
+
+ASMCMD> cd +DATA/DBA167/CONTROLFILE
+ASMCMD> cp current.261.1107575907 current03.ctl
+copying +DATA/DBA167/CONTROLFILE/current.261.1107575907 -> +DATA/DBA167/CONTROLFILE/current03.ctl
+
+ASMCMD> cd +FRA/DBA167/CONTROLFILE
+ASMCMD> cp current.256.1107575907 current04.ctl
+copying +FRA/DBA167/CONTROLFILE/current.256.1107575907 -> +FRA/DBA167/CONTROLFILE/current04.ctl
+
+
+--Now Check files after mounting database
+SQL> alter database mount;
+
+Database altered.
+
+SQL> show parameter control_files;
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+control_files                        string      +DATA/DBA167/CONTROLFILE/curre
+                                                 nt.261.1107575907, +FRA/DBA167
+                                                 /CONTROLFILE/current.256.11075
+                                                 75907, +DATA/DBA167/CONTROLFIL
+                                                 E/current03.ctl, +FRA/DBA167/C
+                                                 ONTROLFILE/current04.ctl
+
+
+SQL DEV: select *from v$controlfile;
++DATA/DBA167/CONTROLFILE/current.261.1107575907	NO	16384	646	0
++FRA/DBA167/CONTROLFILE/current.256.1107575907	YES	16384	646	0
++DATA/DBA167/CONTROLFILE/current03.ctl	NO	16384	646	0
++FRA/DBA167/CONTROLFILE/current04.ctl	NO	16384	646	0
+
+
+Redo Log Files
+###############
+Group: is a redo log group in oracle database.
+we can find group by using 
+SQL DEV: 
+SELECT *FROM V$LOG;
+
+-OUTPUT:
+1	1	100	209715200	512	2	NO	INACTIVE	9789239	26-JUL-22	9894007	26-JUL-22	0
+2	1	101	209715200	512	2	NO	CURRENT	9894007	26-JUL-22	18446744073709551615		0
+3	1	99	209715200	512	2	NO	INACTIVE	9683207	25-JUL-22	9789239	26-JUL-22	0
+
+--NOTE WE HAVE 3 GROUPS BY DEFAULT.
+
+GROUP MEMBER: Log files in a group known as Group member.
+By default, 2 member in a group for redo log.
+Let's check group members
+
+SQL DEV: 
+select *from v$logfile
+order by GROUP# ASC;
+
+--Output: 
+1		ONLINE	+DATA/DBA167/ONLINELOG/group_1.262.1107575909	NO	0
+1		ONLINE	+FRA/DBA167/ONLINELOG/group_1.257.1107575911	YES	0
+2		ONLINE	+DATA/DBA167/ONLINELOG/group_2.263.1107575909	NO	0
+2		ONLINE	+FRA/DBA167/ONLINELOG/group_2.258.1107575911	YES	0
+3		ONLINE	+DATA/DBA167/ONLINELOG/group_3.264.1107575911	NO	0
+3		ONLINE	+FRA/DBA167/ONLINELOG/group_3.259.1107575911	YES	0
+
+--we can see, 2 log files/group memeber per group and we have 3 groups and 3x2=6 group members.
+
+--let's multiplex group and group's members
+
+By Default Log file size is 200MB.
+SQL DEV:
+
+
+
+
+--GROUP
+SELECT *FROM v$log;
+
+--GROUP MEMBERS
+SELECT *FROM V$LOGFILE;
+
+--IN MB SIZE
+select Bytes, BYTES/1024/1024 MB from v$log;
+
+--LET'S DO TO ADD NEW LOG GROUP AND MEMBERS/LOGFILE
+--SYNTAX:
+ALTER DATABASE ADD LOGFILE GROUP GROUP_NUMBER (LOCATION_1,LOCATION_2) SIZE 200M;
+
+--FINAL STATEMENT
+ALTER DATABASE ADD LOGFILE GROUP 4 ('+DATA','+FRA') SIZE 200M;
+
+--NOW CHECH LOG GROUP AND MEMBERS
+
+--GROUP
+SELECT *FROM v$log;
+
+--GROUP MEMBERS
+SELECT *FROM V$LOGFILE;
+
+--LET'S SEE HOW TO DROP A GROUP
+--REQUIREMENT: LOG GROUP SHOULD NOT BE CURRENTLY IN USED
+ALTER DATABASE DROP LOGFILE GROUP 4;
+
+--GROUP
+SELECT *FROM v$log;
+
+--GROUP MEMBERS
+SELECT *FROM V$LOGFILE;
+
+--CURRENT STATUS MEANS LOG FILE IS IN USED TO READ
+SELECT *FROM v$log;
+
+--LET'S LOG SWITCH
+ALTER SYSTEM SWITCH LOGFILE;
+
+--CURRENT STATUS CHANGED FROM PREVIOUS ONE. BUT ACTIVE STATUS MEANS THAT LOGFILE IS NOW IN USED FOR RECOVERY PURPOSE.
+SELECT *FROM v$log;
+
+--LET'S ADD LOGFILE/GROUP MEMBERS BY OMF(ORACLE MANAGED FILE)
+ALTER DATABASE ADD LOGFILE MEMBER '+DATA','+FRA' TO GROUP 1;
+
+--LET'S CHECK GROUP MEMBERS 
+SELECT *FROM V$LOGFILE;
+
+--GROUP MEMBER DELETE REQUIREMENTS
+--01. A GROUP MUST HAVE AT LEAST 1 GROUP MEMBER/LOGFILE
+SELECT *FROM V$LOGFILE
+WHERE GROUP#=1 
+ORDER BY MEMBER ASC;
+
+--NOW DROP
+ALTER DATABASE DROP LOGFILE MEMBER '+DATA/DBA167/ONLINELOG/group_1.271.1111155253';
+ALTER DATABASE DROP LOGFILE MEMBER '+FRA/DBA167/ONLINELOG/group_1.261.1111155253';
+
+--IF ERROR OCCURRED THEN TRY TO LOG SWITCH
+--BECASUSE CURRENTY USED LOG GROUP WILL NOT BE DROP
+
+--LET'S LOG SWITCH
+ALTER SYSTEM SWITCH LOGFILE;
+
+--NOW TRY TO DROP THE LOGFILES
+ALTER DATABASE DROP LOGFILE MEMBER '+DATA/DBA167/ONLINELOG/group_1.271.1111155253';
+ALTER DATABASE DROP LOGFILE MEMBER '+FRA/DBA167/ONLINELOG/group_1.261.1111155253';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
