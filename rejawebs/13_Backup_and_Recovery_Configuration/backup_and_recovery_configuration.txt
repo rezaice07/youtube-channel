@@ -255,6 +255,252 @@ ALTER DATABASE DROP LOGFILE MEMBER '+DATA/DBA167/ONLINELOG/group_1.271.111115525
 ALTER DATABASE DROP LOGFILE MEMBER '+FRA/DBA167/ONLINELOG/group_1.261.1111155253';
 
 
+DATABASE CONFIGURATION IN ARCHIVE MODE
+#######################################
+
+--CHECK DATABASE ARCHIVE STATUS
+SQL> archive log list
+Database log mode              No Archive Mode
+Automatic archival             Disabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     36
+Current log sequence           38
+
+-OR WE CAN USE BELOW COMMAND ON DATABASE
+SQL> SELECT LOG_MODE FROM V$DATABASE;
+
+LOG_MODE
+------------
+NOARCHIVELOG
+
+--REQUIREMENTS
+--01. ARCHIVE LOCATION
+--02. ARCHIVE FILE FORMATE
+
+--CHECK LOG_ARCHIVE_DEST PARAMETER VALUES
+
+SQL> SHOW PARAMETER LOG_ARCHIVE_DEST
+
+--WE HAVE FOUND 31 LOCATION
+--IF WE SET 1 FOR LOCAL AND REMAINING 30 FOR REMOTE LOCATION WILL BE AVAILABLE.
+--SO, STAND BY WE CAN 30 DATABASES IN READY MODE FROM ARCHIVE AND LOCAL FOR 10 DATABASES 
+
+--CHECK DB_RECO
+SQL> SHOW PARAMETER DB_RECO
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      +FRA
+db_recovery_file_dest_size           big integer 8256M
+
+--let's change directory to +FRA/dba167 in asm
+ASMCMD> cd +FRA/dba167
+ASMCMD> ls
+Backup_DATAFILE/
+CONTROLFILE/
+DATAFILE/
+ONLINELOG/
+
+--now check the log archive format
+SQL> show parameter format;
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+log_archive_format                   string      %t_%s_%r.dbf
+nls_date_format                      string
+nls_time_format                      string
+nls_time_tz_format                   string
+nls_timestamp_format                 string
+nls_timestamp_tz_format              string
+permit_92_wrap_format                boolean     TRUE
+star_transformation_enabled          string      FALSE
+uniform_log_timestamp_format         boolean     TRUE
+
+--Now we will alter following command for location and path respectively.
+
+1. Archive location-- 
+   the below line is default. So we don't need to execute this one.
+   alter system set db_recovery_file_dest='+FRA'; 
+   
+2. Archive file format
+   alter system set log_archive_format='%d_%t_%s_%r.arc' scope=spfile;
+	
+	-check now parameter format
+	SQL> show parameter format
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	log_archive_format                   string      %d_%t_%s_%r.arc
+	nls_date_format                      string
+	nls_time_format                      string
+	nls_time_tz_format                   string
+	nls_timestamp_format                 string
+	nls_timestamp_tz_format              string
+	permit_92_wrap_format                boolean     TRUE
+	star_transformation_enabled          string      FALSE
+	uniform_log_timestamp_format         boolean     TRUE
+
+--Check status database archive log	
+SQL> alter database archivelog;
+alter database archivelog
+*
+ERROR at line 1:
+ORA-01126: database must be mounted in this instance and not open in any
+instance
+
+--let's mount the database first.
+SQL> shutdown immediate
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup mount;
+ORACLE instance started.
+
+Total System Global Area 2466249672 bytes
+Fixed Size                  8899528 bytes
+Variable Size             536870912 bytes
+Database Buffers         1912602624 bytes
+Redo Buffers                7876608 bytes
+Database mounted.
+SQL> alter database archivelog;
+
+Database altered.
+
+--Now open the database
+SQL> alter database open;
+
+Database altered.
+
+--check archive log list status.
+SQL> archive log list
+Database log mode              Archive Mode
+Automatic archival             Enabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     38
+Next log sequence to archive   40
+Current log sequence           40
+
+--ALSO CHECK DATABASE
+
+SQL> SELECT LOG_MODE FROM V$DATABASE;
+
+LOG_MODE
+------------
+ARCHIVELOG
+
+--let's check archive files
+--first we need to swich log
+SQL> alter system switch logfile;
+
+System altered.
+
+--Now check archive files from asm
+[grid@dba167 ~]$ asmcmd
+ASMCMD> ls
+DATA/
+FRA/
+ASMCMD> cd fra
+ASMCMD> ls
+DBA167/
+ASMCMD> cd dba167
+ASMCMD> ls
+ARCHIVELOG/
+Backup_DATAFILE/
+CONTROLFILE/
+DATAFILE/
+ONLINELOG/
+ASMCMD> cd ARCHIVELOG/
+ASMCMD> ls
+2022_07_27/
+ASMCMD> cd2022_07_27/
+ASMCMD-8022: unknown command 'cd2022_07_27/' specified
+ASMCMD> cd 2022_07_27/
+ASMCMD> ls
+thread_1_seq_40.262.1111178717
+thread_1_seq_41.263.1111181875
+thread_1_seq_42.264.1111182055
+	
+--Let's create two directories..
+[oracle@dba167 ~]$ mkdir /u01/app/oracle/arc1
+[oracle@dba167 ~]$ mkdir /u01/app/oracle/arc2
+[
+[oracle@dba167 oracle]$ ls -las
+total 0
+0 drwxrwxr-x. 10 oracle oinstall 121 Jul 27 21:58 .
+0 drwxrwxr-x.  6  54321    54321  66 Jun  7 04:19 ..
+0 drwxr-x---.  3 oracle oinstall  20 Jun  7 06:42 admin
+0 drwxr-xr-x.  2 oracle oinstall   6 Jul 27 21:58 arc1
+0 drwxr-xr-x.  2 oracle oinstall   6 Jul 27 21:58 arc2
+0 drwxr-x---.  3 oracle oinstall  20 Jun  7 06:45 audit
+0 drwxrwxr-x.  4 oracle oinstall  34 Jun  7 06:45 cfgtoollogs
+0 drwxr-xr-x.  2 oracle oinstall   6 Jun  7 06:35 checkpoints
+0 drwxrwxr-x. 23 oracle oinstall 280 Jun  7 06:35 diag
+0 drwxrwxr-x.  3 oracle oinstall  20 Jun  6 05:48 product
+
+
+--let's configure the location of newly created path for archives
+SQL> alter system set log_archive_dest_1='LOCATION=/u01/app/oracle/arc1' scope=spfile;
+
+System altered.
+
+SQL> alter system set log_archive_dest_2='LOCATION=/u01/app/oracle/arc2' scope=spfile;
+
+System altered.
+
+--now restart database
+SQL> startup force
+ORACLE instance started.
+
+Total System Global Area 2466249672 bytes
+Fixed Size                  8899528 bytes
+Variable Size             536870912 bytes
+Database Buffers         1912602624 bytes
+Redo Buffers                7876608 bytes
+Database mounted.
+Database opened.
+
+--now switch the logfile
+SQL> alter system switch logfile;
+
+System altered.
+
+
+--now check the logfiles
+[oracle@dba167 ~]$ cd /u01/app/
+[oracle@dba167 app]$ ls
+19.3.0  grid  oracle  oraInventory
+[oracle@dba167 app]$ cd ora
+-bash: cd: ora: No such file or directory
+[oracle@dba167 app]$ cd oracle/
+[oracle@dba167 oracle]$ ls
+admin  arc1  arc2  audit  cfgtoollogs  checkpoints  diag  product
+[oracle@dba167 oracle]$ cd arc1/
+[oracle@dba167 arc1]$ ls
+2e8a9d9f_1_45_1106721890.arc  2e8a9d9f_1_46_1106721890.arc
+[oracle@dba167 arc1]$ cd ../
+[oracle@dba167 oracle]$ cd arc2/
+[oracle@dba167 arc2]$ ls
+2e8a9d9f_1_45_1106721890.arc  2e8a9d9f_1_46_1106721890.arc
+[oracle@dba167 arc2]$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
