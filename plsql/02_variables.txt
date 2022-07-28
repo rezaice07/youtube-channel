@@ -1,0 +1,97 @@
+
+Variables
+############
+There are 4 types of variables
+
+01. Scalar: a single value with one type. It's a basic and simple type. and also known as simple datatype.
+	char(max_length)
+	varchar2(max_length)
+	number(precision,scale)
+	binary_integer
+	binary_float
+	binary_double
+	boolean
+	date
+	timestamp(precision)
+	timestamp(p)withtimezone
+	timestamp(p)with local timezone
+	interval(p)year to month
+	interval(p) day to second(p)
+	
+02. Reference: Reference datatypes hold value which point to a storage location. and simply called as pointers.
+
+
+03. Large Objects(LOBs): are aslo pointers to other data items that are stored outside of the table such as images, files, etc.
+
+04. Composite: is generally called as collections or records. so it can store more than one value.
+
+
+WORKING WITH VARIABLE
+########################
+
+--EXAMPLE - 01
+
+SET SERVEROUTPUT ON;
+--NOTE: ITS NEEDED ONLY PER SESSION. SO, AFTER EXECUTING ONCE, THEN WE DON'T NEED TO EXECUTE IT AGAIN.
+declare 
+  V_TEXT VARCHAR2(50) NOT NULL DEFAULT 'HELLO';
+BEGIN
+  --LET'S ASSIGN A VARIABLE VALUE
+  V_TEXT := 'HELLO PL/SQL' || ' COURSE';
+  DBMS_OUTPUT.PUT_LINE(V_TEXT || ' BEGINNER TO ADVANCED');
+
+END;
+
+
+--EXAMPLE - 01
+declare   
+  V_TEXT VARCHAR2(50) NOT NULL := 'HELLO PL/SQL' || ' COURSE';
+BEGIN
+  --LET'S ASSIGN A VARIABLE VALUE  
+  DBMS_OUTPUT.PUT_LINE(V_TEXT || ' BEGINNER TO ADVANCED');
+
+END;
+
+
+
+WORKING WITH NUMBER
+#########################
+
+--EXAMPLE - 01
+DECLARE   
+  V_NUMBER NUMBER NOT NULL := 50.42;
+BEGIN 
+  DBMS_OUTPUT.PUT_LINE(V_NUMBER || ' BEGINNER TO ADVANCED');
+END;
+
+--OUTPUT: 50.42 BEGINNER TO ADVANCED
+
+--EXAMPLE - 02
+DECLARE   
+  V_NUMBER NUMBER(4) NOT NULL := 50.42;
+BEGIN 
+  DBMS_OUTPUT.PUT_LINE(V_NUMBER || ' BEGINNER TO ADVANCED');
+END;
+--50 BEGINNER TO ADVANCED
+
+--EXAMPLE - 03
+DECLARE   
+  V_NUMBER NUMBER(4,2) NOT NULL := 50.42;
+BEGIN 
+  DBMS_OUTPUT.PUT_LINE(V_NUMBER || ' BEGINNER TO ADVANCED');
+END;
+--50.42 BEGINNER TO ADVANCED
+
+
+--EXAMPLE - 04
+DECLARE   
+  V_NUMBER NUMBER(7,5) NOT NULL := 50.45555555555555;
+BEGIN 
+  DBMS_OUTPUT.PUT_LINE(V_NUMBER || ' BEGINNER TO ADVANCED');
+END;
+--50.45556 BEGINNER TO ADVANCED
+
+
+
+
+
