@@ -1,0 +1,34 @@
+
+
+--Working with if statement
+SET serveroutput ON;
+DECLARE
+  v_number NUMBER :=30;
+BEGIN
+  IF v_number<10 THEN
+    dbms_output.put_line('I''m smaller than 10');
+  ELSIF v_number<20 THEN
+    dbms_output.put_line('I''m smaller than 20');
+  ELSE
+    dbms_output.put_line('I''m equal to 30');
+  END IF;
+END;
+
+
+
+--Working with Case statement
+DECLARE
+  v_job_code        VARCHAR2(10) :='SA_MAN';
+  v_salary_increase NUMBER;
+BEGIN
+  v_salary_increase :=
+  CASE v_job_code
+  WHEN 'SA_MAN' THEN
+    0.20
+  WHEN 'SA_REP' THEN
+    0.30
+  ELSE
+    0
+  END;
+  dbms_output.put_line(v_salary_increase);
+END;
