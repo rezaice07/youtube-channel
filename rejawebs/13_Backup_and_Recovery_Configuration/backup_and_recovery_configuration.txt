@@ -60,7 +60,7 @@ SQL> ALTER SYSTEM SET CONTROL_FILES=
         '+DATA/DBA167/CONTROLFILE/current.261.1107575907',
         '+FRA/DBA167/CONTROLFILE/current.256.1107575907',
         '+DATA/DBA167/CONTROLFILE/current03.ctl',
-        '+FRA/DBA167/CONTROLFILE/current04.ctl' SCOPE=SPFILE;  2    3    4    5
+        '+FRA/DBA167/CONTROLFILE/current04.ctl' SCOPE=SPFILE;  
 
 System altered.
 
