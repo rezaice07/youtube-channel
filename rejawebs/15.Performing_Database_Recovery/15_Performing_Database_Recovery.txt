@@ -1,0 +1,432 @@
+
+
+Loss Of Control file:
+------------------------------
+--CHECK THE CONTROLFILES
+
+SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/CONTROLFILE/current.261.1107575907
++FRA/DBA167/CONTROLFILE/current.256.1107575907
++DATA/DBA167/CONTROLFILE/current03.ctl
++FRA/DBA167/CONTROLFILE/current04.ctl
+
+--If we want to restore the controlfile backup using RMAN, should database in nomount stage
+--Before doing that first we will damage/delete the controlfile file from the above location
+
++DATA/DBA167/CONTROLFILE/current03.ctl
+ 
+--Now we will close the database 
+
+RMN backup should be in nomount stage
+SQL> SHUTDOWN IMMEDIATE;
+
+
+--Now we'll delete/damage the controlfile named as current03.ctl
+ASMCMD> cd +data/dba167/CONTROLFILE
+ASMCMD> ls
+Current.261.1107575907
+current03.ctl
+ASMCMD> rm current03.ctl
+
+--Let's try start the database
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area 4294963272 bytes
+Fixed Size                  8904776 bytes
+Variable Size            2399141888 bytes
+Database Buffers         1879048192 bytes
+Redo Buffers                7868416 bytes
+ORA-00205: error in identifying control file, check alert log for more info
+
+--Note: showwing control file issue
+
+--let's see the alert logs
+[oracle@dba167 /]$ tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
+
+--Connect to RMAN
+[oracle@dba167 ~]$ rman target sys/sys123
+
+--now restore the missing control file
+RMAN> restore controlfile from '+DATA/DBA167/CONTROLFILE/current.261.1107575907';
+
+Starting restore at 04-AUG-22
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=237 device type=DISK
+
+channel ORA_DISK_1: copied control file copy
+output file name=+DATA/DBA167/CONTROLFILE/current.261.1107575907
+output file name=+FRA/DBA167/CONTROLFILE/current.256.1107575907
+output file name=+DATA/DBA167/CONTROLFILE/current03.ctl
+output file name=+FRA/DBA167/CONTROLFILE/current04.ctl
+Finished restore at 04-AUG-22
+
+--Now mount the database 
+SQL> alter database mount;
+
+Database altered.
+
+SQL>
+
+--So our control file is restored successfully
+
+
+*****If you have not asm then we can restore control file with the following steps....
+
+--SHUTDOWN database
+SQL> shutdown immediate
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+
+
+--locate controlfile
+ASMCMD> cd +FRA/DBA167/CONTROLFILE/
+ASMCMD> ls
+Current.256.1107575907
+current04.ctl
+
+--now delete the control file 
+ASMCMD> rm current03.ctl
+
+
+ASMCMD> ls
+Current.261.1107575907
+
+--now copy the fra control file with the missing control file name. here we are using current03.ctl
+ASMCMD> cp '+FRA/DBA167/CONTROLFILE/current04.ctl' current03.ctl
+copying +FRA/DBA167/CONTROLFILE/current04.ctl -> +DATA/DBA167/CONTROLFILE/current03.ctl
+
+--Now restart the database 
+SQL> startup force
+ORACLE instance started.
+
+Total System Global Area 4294963272 bytes
+Fixed Size                  8904776 bytes
+Variable Size            2399141888 bytes
+Database Buffers         1879048192 bytes
+Redo Buffers                7868416 bytes
+Database mounted.
+Database opened.
+
+EXPDP/IMPDP
+##########################$$$$$$
+[oracle@dba167 ~]$ expdp help=y
+
+--Here we can see bunch of help info about export data pumb
+
+--But we need very freequently items are...
+COMPRESSION=Valid keyword values are: ALL, DATA_ONLY, [METADATA_ONLY] and NONE
+COMPRESSION_ALGORITHM=Valid keyword values are: [BASIC], LOW, MEDIUM and HIGH
+CONTENT=Valid keyword values are: [ALL], DATA_ONLY and METADATA_ONLY
+DIRECTORY=?
+DUMPFILE=?
+
+ENCRYPTION=Valid keyword values are: ALL, DATA_ONLY, ENCRYPTED_COLUMNS_ONLY, METADATA_ONLY and NONE
+ENCRYPTION_ALGORITHM=Valid keyword values are: [AES128], AES192 and AES256.
+ENCRYPTION_MODE=Valid keyword values are: DUAL, PASSWORD and [TRANSPARENT].
+ENCRYPTION_PASSWORD
+
+--Let's create a new directory for export and import
+[oracle@dba167 ~]$ mkdir expimpdir
+[oracle@dba167 ~]$ cd expimpdir
+[oracle@dba167 expimpdir]$ pwd
+/home/oracle/expimpdir
+
+--let's connect with sys user
+[oracle@dba167 expimpdir]$ sqlplus / as sysdba
+
+--now we will create directory for new created directory above.
+SQL> create directory EXPIMPDIR as '/home/oracle/expimpdir' ;
+
+Directory created.
+
+SQL> grant read, write on directory EXPIMPDIR to public;
+
+Grant succeeded.
+
+--note: public means any user can export and import to this location/path
+
+--now i just want to delete the existing user a
+SQL> drop user a cascade;
+
+User dropped.
+
+--creating new user expuser
+SQL> create user expuser identified by expuser;
+
+User created.
+
+SQL> grant create session to expuser;
+
+Grant succeeded.
+
+--assign role for exp_full_database
+SQL> grant datapump_exp_full_database to expuser;
+
+Grant succeeded.
+
+--let's connect the user expuser
+SQL> conn expuser/expuser;
+Connected.
+
+--let's see the user "expuser" current previleges
+SQL> select *from session_privs;
+
+PRIVILEGE
+----------------------------------------
+EXEMPT REDACTION POLICY
+ADMINISTER SQL MANAGEMENT OBJECT
+READ ANY FILE GROUP
+FLASHBACK ANY TABLE
+RESUMABLE
+ADMINISTER RESOURCE MANAGER
+EXECUTE ANY TYPE
+ANALYZE ANY
+EXECUTE ANY PROCEDURE
+SELECT ANY SEQUENCE
+SELECT ANY TABLE
+
+PRIVILEGE
+----------------------------------------
+BACKUP ANY TABLE
+CREATE TABLE
+CREATE SESSION
+
+14 rows selected.
+
+--let's create a backup for a specific table EMPLOYEES.
+[oracle@dba167 expimpdir]$ expdp hr/hr directory=EXPIMPDIR tables=employees dumpfile=employees.dmp logfile=employees.log
+
+Export: Release 19.0.0.0.0 - Production on Fri Aug 5 02:31:26 2022
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Produc
+Starting "HR"."SYS_EXPORT_TABLE_01":  hr/******** directory=EXPIMPDIR tables=emp
+Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+Processing object type TABLE_EXPORT/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+Processing object type TABLE_EXPORT/TABLE/TABLE
+Processing object type TABLE_EXPORT/TABLE/COMMENT
+Processing object type TABLE_EXPORT/TABLE/INDEX/INDEX
+Processing object type TABLE_EXPORT/TABLE/CONSTRAINT/CONSTRAINT
+Processing object type TABLE_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT
+Processing object type TABLE_EXPORT/TABLE/TRIGGER
+. . exported "HR"."EMPLOYEES"                            17.08 KB     107 rows
+Master table "HR"."SYS_EXPORT_TABLE_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for HR.SYS_EXPORT_TABLE_01 is:
+  /home/oracle/expimpdir/employees.dmp
+Job "HR"."SYS_EXPORT_TABLE_01" successfully completed at Fri Aug 5 02:32:12 2022
+
+
+--let's create a backup by using tns or remote machine for a specific table EMPLOYEES.
+C:\Users\Reja>expdp hr/hr@dba167_1521 directory=EXPIMPDIR tables=employees dumpfile=employees_tns.dmp logfile=employees_tns.log
+
+Export: Release 19.0.0.0.0 - Production on Thu Aug 4 20:39:59 2022
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Starting "HR"."SYS_EXPORT_TABLE_01":  hr/********@dba167_1521 directory=EXPIMPDIR tables=employees dumpfile=employees_tns.dmp logfile=employees_tns.log
+Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+Processing object type TABLE_EXPORT/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+Processing object type TABLE_EXPORT/TABLE/TABLE
+Processing object type TABLE_EXPORT/TABLE/COMMENT
+Processing object type TABLE_EXPORT/TABLE/INDEX/INDEX
+Processing object type TABLE_EXPORT/TABLE/CONSTRAINT/CONSTRAINT
+Processing object type TABLE_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT
+Processing object type TABLE_EXPORT/TABLE/TRIGGER
+. . exported "HR"."EMPLOYEES"                            17.08 KB     107 rows
+Master table "HR"."SYS_EXPORT_TABLE_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for HR.SYS_EXPORT_TABLE_01 is:
+  /home/oracle/expimpdir/employees_tns.dmp
+Job "HR"."SYS_EXPORT_TABLE_01" successfully completed at Fri Aug 5 02:40:31 2022 elapsed 0 00:00:31
+
+
+--let's check the backups
+[oracle@dba167 expimpdir]$ ll
+total 544
+-rw-r-----. 1 oracle asmadmin 274432 Aug  5 02:32 employees.dmp
+-rw-r--r--. 1 oracle asmadmin    441 Aug  5 02:39 employees.log
+-rw-r-----. 1 oracle asmadmin 274432 Aug  5 02:40 employees_tns.dmp
+-rw-r--r--. 1 oracle asmadmin   1421 Aug  5 02:40 employees_tns.log
+
+
+--let's see the backup logs
+[oracle@dba167 expimpdir]$ vi employees_tns.log
+
+
+--For data only backy by content.
+
+[oracle@dba167 expimpdir]$ expdp hr/hr directory=EXPIMPDIR tables=employees dumpfile=employees_dataonly.dmp logfile=employees_dataonly.log content=DATA_ONLY
+
+Export: Release 19.0.0.0.0 - Production on Fri Aug 5 02:47:04 2022
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Starting "HR"."SYS_EXPORT_TABLE_01":  hr/******** directory=EXPIMPDIR tables=employees dumpfile=employees_dataonly.dmp logfile=employees_dataonly.log content=DATA_ONLY
+Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+. . exported "HR"."EMPLOYEES"                            17.08 KB     107 rows
+Master table "HR"."SYS_EXPORT_TABLE_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for HR.SYS_EXPORT_TABLE_01 is:
+  /home/oracle/expimpdir/employees_dataonly.dmp
+Job "HR"."SYS_EXPORT_TABLE_01" successfully completed at Fri Aug 5 02:47:10 2022 elapsed 0 00:00:06
+
+
+--check backups
+[oracle@dba167 expimpdir]$ ll
+total 708
+-rw-r-----. 1 oracle asmadmin 163840 Aug  5 02:47 employees_dataonly.dmp
+-rw-r--r--. 1 oracle asmadmin    902 Aug  5 02:47 employees_dataonly.log
+-rw-r-----. 1 oracle asmadmin 274432 Aug  5 02:32 employees.dmp
+-rw-r--r--. 1 oracle asmadmin    441 Aug  5 02:39 employees.log
+-rw-r-----. 1 oracle asmadmin 274432 Aug  5 02:40 employees_tns.dmp
+-rw-r--r--. 1 oracle asmadmin   1420 Aug  5 02:44 employees_tns.log
+
+
+--For METADATA_ONLY backup by content.
+[oracle@dba167 expimpdir]$ expdp hr/hr directory=EXPIMPDIR tables=employees dumpfile=employees_METADATA_ONLY.dmp logfile=employees_METADATA_ONLY.log content=METADATA_ONLY
+
+
+--let's create a big table 
+[oracle@dba167 expimpdir]$ sqlplus / as sysdba
+
+SQL> create table hr.big as select *from dba_objects;
+
+Table created.
+
+SQL> insert into hr.big select *from hr.big;
+
+72678 rows created.
+
+SQL> //
+
+145356 rows created.
+
+SQL> /
+
+290712 rows created.
+
+SQL> /
+
+581424 rows created.
+
+SQL> /
+
+1162848 rows created.
+
+SQL> /
+
+2325696 rows created.
+
+SQL> commit;
+
+Commit complete.
+
+
+--For Parallel process
+
+[oracle@dba167 expimpdir]$ expdp hr/hr directory=EXPIMPDIR tables=big dumpfile=big_%u.dmp logfile=big.log parallel=4
+
+
+--for ENCRYPTION
+[oracle@dba167 expimpdir]$ expdp hr/hr directory=EXPIMPDIR tables=big dumpfile=big3.dmp logfile=big3.log ENCRYPTION=ALL ENCRYPTION_MODE=PASSWORD ENCRYPTION_PASSWORD=abc
+
+Schema Export
+####################
+Let's change system password:
+
+[oracle@dba167 expimpdir]$ expdp system/sys123 directory=EXPIMPDIR schemas=hr dumpfile=hr_schema.dmp logfile=hr_schema.log ENCRYPTION=ALL ENCRYPTION_MODE=PASSWORD ENCRYPTION_PASSWORD=abc
+
+
+[oracle@dba167 expimpdir]$ expdp system/sys123 directory=EXPIMPDIR schemas=hr,OE dumpfile=hroe_schema.dmp logfile=hroe_schema.log ENCRYPTION=ALL ENCRYPTION_MODE=PASSWORD ENCRYPTION_PASSWORD=abc
+
+Full Database
+##############
+[oracle@dba167 expimpdir]$ expdp system/sys123 directory=EXPIMPDIR FULL=Y dumpfile=FullDatabase.dmp logfile=FullDatabase.log ENCRYPTION=ALL ENCRYPTION_MODE=PASSWORD ENCRYPTION_PASSWORD=abc
+
+[oracle@dba167 expimpdir]$ expdp system/sys123 directory=EXPIMPDIR FULL=Y dumpfile=FullDatabase_%u.dmp logfile=FullDatabaseParallel.log ENCRYPTION=ALL ENCRYPTION_MODE=PASSWORD ENCRYPTION_PASSWORD=abc parallel=2
+
+
+ESTIMATE_ONLY
+###################
+
+[oracle@dba167 expimpdir]$ expdp system/sys123 directory=EXPIMPDIR FULL=Y logfile=FullDatabaseestimateonly.log  ESTIMATE_ONLY=yes
+
+
+Import Table
+#############
+
+--If there no use of contraint then we can use 
+[oracle@dba167 expimpdir]$ impdp hr/hr directory=EXPIMPDIR tables=employees remap_table=employees:new_employees dumpfile=employees.dmp logfile=impdp_employees.log
+
+
+
+--if we want to restore back like table in a existig databse, it should be better to create a new table. here named the table as new_employees
+--let's create table
+SQL> create table new_employees as select *from employees where employee_id is null;
+
+--Now execute the following command below..
+[oracle@dba167 expimpdir]$ impdp hr/hr directory=EXPIMPDIR tables=employees remap_table=employees:new_employees dumpfile=employees.dmp logfile=impdp_employees.log content=DATA_ONLY
+
+
+Import Table from one schema to another schema
+################################################
+
+--at first, we need to create a user with role resource as a new schema.
+
+SQL> create user test identified by test;
+ 
+SQL> grant create session, resource to test;
+
+SQL> grant unlimited tablespace to test;
+ 
+SQL> create table test.employees as select *from hr.employees where employee_id is null;
+
+--let's try to restore back to test from hr with table employees
+[oracle@dba167 expimpdir]$  impdp system/sys123 remap_schema=HR:TEST directory=EXPIMPDIR tables=hr.employees dumpfile=employees.dmp logfile=impdp_employees2.log content=data_only
+
+Import Schema
+################
+
+--first we need to drop user hr
+SQL> drop user hr cascade;
+
+User dropped.
+
+--let's try to restore the schema from directory EXPIMPDIR with the dump hr_schema.dmp and emcryption password abc
+
+[oracle@dba167 expimpdir]$  impdp system/sys123 directory=EXPIMPDIR schemas=hr dumpfile=hr_schema.dmp logfile=imp_hr_schema.log ENCRYPTION_PASSWORD=abc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -52,8 +52,8 @@ ASMCMD> cd +FRA/DBA167/CONTROLFILE/
 ASMCMD> ls
 Current.256.1107575907
 
---so question is here . why we do need to location for control file.
---Ans is if the any one of the data is damaged then the other one can be used to overcome.
+--so question is here . why we do need to multiplex for control file.
+--Ans is if any one of the control file's data is damaged then the other one can be used to failover.
 
 --let's add more control file in both data and fra location...
 SQL> ALTER SYSTEM SET CONTROL_FILES=
@@ -160,7 +160,7 @@ SELECT *FROM V$LOG;
 --NOTE WE HAVE 3 GROUPS BY DEFAULT.
 
 GROUP MEMBER: Log files in a group known as Group member.
-By default, 2 member in a group for redo log.
+By default, 2 members in a group for redo log.
 Let's check group members
 
 SQL DEV: 
@@ -273,9 +273,9 @@ LOG_MODE
 ------------
 NOARCHIVELOG
 
---REQUIREMENTS
+--ARCHIVE REQUIREMENTS
 --01. ARCHIVE LOCATION
---02. ARCHIVE FILE FORMATE
+--02. ARCHIVE FILE FORMAT
 
 --CHECK LOG_ARCHIVE_DEST PARAMETER VALUES
 
@@ -319,12 +319,25 @@ uniform_log_timestamp_format         boolean     TRUE
 --Now we will alter following command for location and path respectively.
 
 1. Archive location-- 
-   the below line is default. So we don't need to execute this one.
-   alter system set db_recovery_file_dest='+FRA'; 
+   --the below line is default. So we don't need to execute this one.
+   SQL> alter system set db_recovery_file_dest='+FRA'; 
    
 2. Archive file format
-   alter system set log_archive_format='%d_%t_%s_%r.arc' scope=spfile;
+   SQL> alter system set log_archive_format='%d_%t_%s_%r.arc' scope=spfile;
 	
+	NOTE: 
+	%s log sequence number
+
+	%S log sequence number, zero filled
+
+	%t thread number
+
+	%T thread number, zero filled
+
+	%a activation ID
+
+	%d database ID
+
 	-check now parameter format
 	SQL> show parameter format
 
@@ -340,7 +353,7 @@ uniform_log_timestamp_format         boolean     TRUE
 	star_transformation_enabled          string      FALSE
 	uniform_log_timestamp_format         boolean     TRUE
 
---Check status database archive log	
+--Change/enable the status of database archive log	
 SQL> alter database archivelog;
 alter database archivelog
 *
@@ -353,6 +366,7 @@ SQL> shutdown immediate
 Database closed.
 Database dismounted.
 ORACLE instance shut down.
+
 SQL> startup mount;
 ORACLE instance started.
 
@@ -362,6 +376,9 @@ Variable Size             536870912 bytes
 Database Buffers         1912602624 bytes
 Redo Buffers                7876608 bytes
 Database mounted.
+
+--Now database at the stage of mount and could possible to alter the database in archivelog
+
 SQL> alter database archivelog;
 
 Database altered.
