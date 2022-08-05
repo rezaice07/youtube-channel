@@ -1,0 +1,227 @@
+
+
+Roadmap:
+	Good knowledge and understanding of 
+		ASP.NET Web API, 
+		ASP.NET Core API
+		OData - Done
+		{
+			VIVA: Stands for Open Data Protocol, it is a rest based data acccess protocol.
+			It provides a way to query and manipulating data.			
+
+			References: https://www.youtube.com/watch?v=NoXZ4tdD6kc&ab_channel=ITSolsAndServices					
+			
+			https://github.com/OData/AspNetCoreOData
+			https://referbruv.com/blog/working-with-odata-integrating-an-existing-aspnet-core-3x-api/
+			https://devblogs.microsoft.com/odata/tutorial-creating-a-service-with-odata-8-0/
+			Reference: https://www.youtube.com/watch?v=w0Tj0VIUCtA&ab_channel=HassanHabib
+			https://www.youtube.com/watch?v=l024p4_3q2c&list=PLan3SCnsISTTvSFkS8d1l49N4evvrgdQN&ab_channel=HassanHabib
+			https://www.youtube.com/watch?v=1oA6XxmYAA0&ab_channel=HassanHabib
+			https://www.youtube.com/watch?v=VFunAvbrZeQ&ab_channel=dotNET
+		}
+		Entity Framework code first - Done
+		{
+			Enabling Migration:
+				Enable-migrations -verbose
+				Note: This is the first one time process.
+					  Here, the Verbose is using to display detail information with respect to this command.
+				
+			Adding Migration 
+				Add-Migration Migration_Name  -verbose //should keep in single word. 
+				Note: look the migration folder also created in your project with the name of migration	
+			Updating Database -verbose
+				Update-Database
+				
+				Note: We can also give the desired Migration_Name to back to that version or migration point.
+				Let's see how to we do that..
+				
+				Update-Database -TergetMigration: Migration_Name -verbose	
+				
+			Githut Project: https://github.com/rezaice07/asp_net_code_first-migration.git
+
+		}
+		Asynchronous Programming in C#, 
+		LINQ, 
+		Lambdas, 
+		Func, 
+		Action	
+
+	Solid knowledge and experience in implementing Restful Web services.
+	
+	Deep knowledge of Object-Oriented design and implementation.
+	
+	Good knowledge of the SOLID principle/guidelines and a good understanding of Software Design Patterns.
+	
+	Good knowledge of 
+		OAuth
+		{
+			OAuth: Stands for Open Authorization.
+				This is a authentication protocol and is known as OAuth.
+				Basic Example: 
+				If we consider the Two side, one Client and another one is Server
+				So, first of all need to register the client in oauth server
+			
+			01. Register a Client
+				On registering a client, this will create an application as we as register the redirect url,
+				client id,client_secret, user account like login user and password
+								
+				Client Registration
+				-------------------
+				client_id	Sw0djChhK75DL8oFXhMQImI-
+				client_secret	ZmRUgfx6_jE1_zD7VkNJdEDw2MJIRKEiFS1m93lQ0zsoV-cp
+				
+				User Account
+				------------
+				login	old-gerenuk@example.com
+				password	Disgusted-Reindeer-93
+				
+				Authorization URL
+				-----------------
+				https://authorization-server.com/authorize?
+				response_type=code
+				&client_id=Sw0djChhK75DL8oFXhMQImI-
+				&redirect_uri=https://www.oauth.com/playground/authorization-code.html
+				&scope=photo+offline_access
+				&state=_ilzftaQ1rycGG-Q
+				
+			02. Requesting a login to server from client with valid username and password
+			
+			
+			03. After the user is redirected back to the client, verify the state matches
+				Verify the state parameter
+				--------------------------
+				The user was redirected back to the client, and you'll notice a few additional query parameters in the URL:
+
+				?state=_ilzftaQ1rycGG-Q&code=ItbZcW-kfOTzXdqUyj_SX5Jm5G1ixKBkXAqcHpK0ZuE7jQdZ
+				You need to first verify that the state parameter matches the value stored in this user's session so that you protect against CSRF attacks.
+
+				Depending on how you've stored the state parameter (in a cookie, session, or some other way), verify that it matches the state that you originally included in step 1. Previously, we had stored the state in a cookie for this demo.
+
+				Does the state stored by the client (_ilzftaQ1rycGG-Q) match the state in the redirect (_ilzftaQ1rycGG-Q)?
+				
+			04. Exchange the Authorization Code
+				Now you're ready to exchange the authorization code for an access token.
+
+				The client builds a POST request to the token endpoint with the following parameters:
+
+				POST https://authorization-server.com/token
+
+				grant_type=authorization_code
+				&client_id=Sw0djChhK75DL8oFXhMQImI-
+				&client_secret=ZmRUgfx6_jE1_zD7VkNJdEDw2MJIRKEiFS1m93lQ0zsoV-cp
+				&redirect_uri=https://www.oauth.com/playground/authorization-code.html
+				&code=ItbZcW-kfOTzXdqUyj_SX5Jm5G1ixKBkXAqcHpK0ZuE7jQdZ
+				
+				Note that the client's credentials are included in the POST body in this example. Other authorization servers may require that the credentials are sent as a HTTP Basic Authentication header.
+			 
+			05. Token Endpoint Response
+				Here's the response from the token endpoint! The response includes the access token and refresh token.
+				{
+				  "token_type": "Bearer",
+				  "expires_in": 86400,
+				  "access_token": "t_6ay1hv8vlYpoWt7x0Vc3BMVo0H1V9Jc9eJqQn9D9y-ovHTQfXhK8oNQ5-tVC8btDQDXn5y",
+				  "scope": "photo offline_access",
+				  "refresh_token": "Vd4d14Lu7mbE_u0zS1tsg6LA"
+				}
+				
+				Great! Now your application has an access token, and can use it to make API requests on behalf of the user.
+			
+			
+		}, 
+		OpemnID :OpenID Connect Authorization Code Flow
+		{
+			01. Register a Client
+				Before you can begin the flow, you'll need to register a client and create a user. 
+				Registration will give you a client ID an secret your application will use during the OAuth flow.
+				
+				In order to use an OAuth API, you'll need to first register your application. Typically this involves setting up a developer account at the service, then answering some questions about your application, uploading a logo, etc.
+
+				For the purposes of this demo, we don't require that you sign up for an account. Instead, you can click "Register" below, and we will register a client automatically.
+
+				This will create an application, register the redirect URI, as well as create a user account you can use for testing.
+				
+				Client Registration
+				---------------------
+				client_id	c-uJDKuAE2Jyfo8VlZNM8OGJ
+				client_secret	i6HzqkHoeekhiCEHO6MZQW8G0L07jtGnDl7Q3d6IediOQH02
+				
+				User Account
+				------------
+				login	lively-weevil@example.com
+				password	Aggressive-Alligator-78
+			
+			02. Build the Authorization URL
+				Before authorization begins, it first generates a random string to use for the state parameter. The client will need to store this to be used in the next step.
+
+				https://authorization-server.com/authorize?
+				  response_type=code
+				  &client_id=c-uJDKuAE2Jyfo8VlZNM8OGJ
+				  &redirect_uri=https://www.oauth.com/playground/oidc.html
+				  &scope=openid+profile+email+photos
+				  &state=XefNDdTe6R61AZVY
+				  &nonce=GbR1MQm7eqbdn5Mg
+				For this demo, we've gone ahead and generated random state and nonce parameters (shown above) and saved them in a cookie.
+
+				Click "Authorize" below to be taken to the authorization server. You'll need to enter the username and password that was generated for you.
+			
+			03. Verify the state parameter
+
+				The user was redirected back to the client, and you'll notice a few additional query parameters in the URL:
+
+				?state=XefNDdTe6R61AZVY&code=t_FPZHGdB2hwADTLLGY0GFvrp68suvopZV_jLT7f8ROJTLAA
+				You need to first verify that the state parameter matches the value stored in this user's session so that you protect against CSRF attacks.
+
+				Depending on how you've stored the state parameter (in a cookie, session, or some other way), verify that it matches the state that you originally included in step 1. Previously, we had stored the state in a cookie for this demo.
+
+				Does the state stored by the client (XefNDdTe6R61AZVY) match the state in the redirect (XefNDdTe6R61AZVY)?
+			
+			04. Exchange the Authorization Code
+			Now you're ready to exchange the authorization code for an access token.
+
+			The client builds a POST request to the token endpoint with the following parameters:
+
+			POST https://authorization-server.com/token
+
+			grant_type=authorization_code
+			&client_id=c-uJDKuAE2Jyfo8VlZNM8OGJ
+			&client_secret=i6HzqkHoeekhiCEHO6MZQW8G0L07jtGnDl7Q3d6IediOQH02
+			&redirect_uri=https://www.oauth.com/playground/oidc.html
+			&code=t_FPZHGdB2hwADTLLGY0GFvrp68suvopZV_jLT7f8ROJTLAA
+			
+			Note that the client's credentials are included in the POST body in this example. Other authorization servers may require that the credentials are sent as a HTTP Basic Authentication header.
+			
+		},
+		Identity Server (Open source identity server), 
+		Access Mechanism, 
+		ASP.NET Identity (microsoft build in identity )
+		{
+			
+		
+			References:
+			https://www.youtube.com/results?search_query=ASP.NET+Identity
+			
+			https://www.youtube.com/watch?v=iFw3KnnT9hE&ab_channel=FoyzulKarim
+		}
+		is a plus.
+		
+	Familiarity with front-end web technologies 
+		JavaScript, 
+		Angular/React, 
+		ES6, 
+		TypeScript 
+		is a plus!
+	
+	Previous experience working in an 
+		Agile/ Scrum team 
+		is a plus.
+	
+	
+	
+	https://docs.google.com/forms/d/e/1FAIpQLScBkpb8Y149x6RyqKIyAEKThZmpSq4A5JW_IRZRbJ6h0q_gqA/viewform
+	
+	https://www.cefalo.com/jobs/senior-csharp-dotnet-developer?fbclid=IwAR2fiVTLSUWubFSbnfKtIOSDkUqY4N01vLLfklahWSPjV4N6MoUKZrJtvAo
+		
+		
+
+
+
