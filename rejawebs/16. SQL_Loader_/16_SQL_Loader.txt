@@ -1,0 +1,149 @@
+
+
+Oracle - SQL Loader
+--------------------
+Search on google by "oracle - sql loader example"
+
+use the url below....
+https://www.thegeekstuff.com/2012/06/oracle-sqlldr/
+
+--create a datafile named with empinfo.txt and create it into the follwing location
+
+file: empinfo.txt
+Data:
+100,Thomas,Sales,5000
+200,Jason,Technology,5500
+300,Mayla,Technology,7000
+400,Nisha,Marketing,9500
+500,Randy,Technology,6000
+501,Ritu,Accounting,5400
+
+--create directory to 
+[oracle@dba167 ~]$ mkdir /home/oracle/oracle_load_data
+
+[oracle@dba167 ~]$ cd /home/oracle/oracle_load_data
+
+[oracle@dba167 oracle_load_data]$ vi empinfo.txt
+
+--Let's create table like below
+SQL> create table hr.empinfo
+(
+  id integer,
+  name varchar2(10),
+  dept varchar2(15),
+  salary integer
+);
+
+Table created.
+
+--Let's build a control file and create a file with the name as data_loader_control_file.ctl and save it by using following command...
+[oracle@dba167 oracle_load_data]$ vi /home/oracle/oracle_load_data/data_loader_control_file.ctl
+
+Contents:
+
+load data
+ infile '/home/oracle/oracle_load_data/empinfo.txt'
+ into table hr.empinfo
+ fields terminated by ","
+ ( id, name, dept, salary )
+ 
+--Let's load data from file "empinfo.txt" and then insert into "empinfo" table using sqlldr.
+
+[oracle@dba167 oracle_load_data]$ sqlldr hr/hr control=data_loader_control_file.ctl
+
+SQL*Loader: Release 19.0.0.0.0 - Production on Thu Aug 11 04:15:10 2022
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Path used:      Conventional
+Commit point reached - logical record count 7
+
+Table HR.EMPINFO:
+  5 Rows successfully loaded.
+
+Check the log file:
+  data_loader_control_file.log
+for more information about the load.
+
+
+--let's check .bad file and this file is being used to track which data is not inserted into table empinfo
+[oracle@dba167 oracle_load_data]$ ls
+
+data_loader_control_file.ctl  empinfo.bad
+data_loader_control_file.log  empinfo.txt
+[oracle@dba167 oracle_load_data]$ vi empinfo.txt
+[oracle@dba167 oracle_load_data]$ cat empinfo.bad
+
+mas,Sales,5000
+
+Note: We can do it using pl/sql builder and also the toad to be used.
+
+--External table with sql loader
+
+SQL> create directory EXTDIR as '/home/oracle/oracle_load_data/';
+
+SQL> Grant read, write on directory EXTDIR to public; 
+
+-- let's create a file with the namd contents are below...
+
+[oracle@dba167 oracle_load_data]$ vi /home/oracle/oracle_load_data/exter_tab_data.txt
+
+Data: 
+ENG,England,English
+SCO,Scotland,English
+IRE,Ireland,English
+WAL,Wales,"Weles"
+
+--Let's create a external table
+
+SQL> CREATE TABLE countries_ext (
+  country_code      VARCHAR2(5),
+  country_name      VARCHAR2(50),
+  country_language  VARCHAR2(50)
+)
+ORGANIZATION EXTERNAL (
+  TYPE ORACLE_LOADER
+  DEFAULT DIRECTORY EXTDIR
+  ACCESS PARAMETERS (
+    RECORDS DELIMITED BY NEWLINE
+    FIELDS TERMINATED BY ','
+    MISSING FIELD VALUES ARE NULL
+    (
+      country_code      CHAR(5),
+      country_name      CHAR(50),
+      country_language  CHAR(50)
+    )
+  )
+  LOCATION ('exter_tab_data.txt')
+)
+PARALLEL 5
+REJECT LIMIT UNLIMITED;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

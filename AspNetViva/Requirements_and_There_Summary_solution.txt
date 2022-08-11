@@ -73,8 +73,11 @@ Roadmap:
 				User Account
 				------------
 				login	old-gerenuk@example.com
-				password	Disgusted-Reindeer-93
+				password	Disgusted-Reindeer-93			
 				
+				
+			02. Requesting a login to server from client with valid username and password
+			
 				Authorization URL
 				-----------------
 				https://authorization-server.com/authorize?
@@ -83,9 +86,6 @@ Roadmap:
 				&redirect_uri=https://www.oauth.com/playground/authorization-code.html
 				&scope=photo+offline_access
 				&state=_ilzftaQ1rycGG-Q
-				
-			02. Requesting a login to server from client with valid username and password
-			
 			
 			03. After the user is redirected back to the client, verify the state matches
 				Verify the state parameter
@@ -195,9 +195,45 @@ Roadmap:
 		Access Mechanism, 
 		ASP.NET Identity (microsoft build in identity )
 		{
+			ASP.NET Identity: is a membership system.
+			It provides Authorization and Authentication
+			It is a claim based system 
+				-uses to store login, claims and roles information
+			
+			Middleware: Uses the OWIN middleware 
+			
+			Introducing: from targeted .net framework 4.5 version
+			
+			What does asp.net identity Supports?
+			- OAuth/OpemnID
+			- Azure AD, Office365
+			
+			What is SSO?
+			- User provids same credentials to access multiple services
+			- User provides credentials once to acccess multiple services
+			
+			What is Claims?
+			A claim is a name value pair and A claims-based identity is the set of claims.
+			Can contain much information about user like user name, email, and many more.
+			
+			Key Components
+				Security Middleware
+					Microsoft Owin Security
+							OAuth,Facebook, Google,Twitter, Microsoft Account,
+							
+				Identity
+					Microsoft.AspNet.Identity
+					Microsoft.AspNet.Identity.EntityFramework
+					
+			Class Overview
+				IdentityUser
+				EmailService,SmsService - Notified during 2-factor authentication
+				UserManager- Apis to crud user, claim & auth info via UserStore
+				
 			
 		
 			References:
+			https://www.youtube.com/watch?v=2SIYclIN2jI&list=PL38oYrcNWuOPs29ltEJGuzMKaYEMKBp6-&ab_channel=RGEdu
 			https://www.youtube.com/results?search_query=ASP.NET+Identity
 			
 			https://www.youtube.com/watch?v=iFw3KnnT9hE&ab_channel=FoyzulKarim
