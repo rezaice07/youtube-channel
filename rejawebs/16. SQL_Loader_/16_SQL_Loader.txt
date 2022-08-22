@@ -120,6 +120,11 @@ ORGANIZATION EXTERNAL (
 PARALLEL 5
 REJECT LIMIT UNLIMITED;
 
+Materiazed View
+---------------
+
+
+
 
 
 
