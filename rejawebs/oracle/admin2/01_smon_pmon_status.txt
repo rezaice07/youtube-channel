@@ -1,0 +1,126 @@
+
+
+--You can check if PMON/SMON is running from the command line in Linux/Unix:
+
+[oracle@dba167 ~]$ ps -ef | grep pmon
+grid       2805      1  0 13:25 ?        00:00:00 asm_pmon_+ASM
+oracle     2920      1  0 13:26 ?        00:00:00 ora_pmon_dba167
+oracle    14426   2617  0 16:25 pts/0    00:00:00 grep --color=auto pmon
+
+[oracle@dba167 ~]$ ps -ef | grep smon
+grid       2838      1  0 13:25 ?        00:00:00 asm_smon_+ASM
+oracle     2964      1  0 13:26 ?        00:00:00 ora_smon_dba167
+oracle    14439   2617  0 16:25 pts/0    00:00:00 grep --color=auto smon
+
+sysbackup
+
+--let's create a new user
+create user sysback_user
+identified by 123;
+
+--to give privileges
+grant create session, sysbackup to sysback_user;
+
+
+--Let's get database backup
+[oracle@dba167 ~]$ rman target sysback_user/123;
+
+RMAN> backup database;
+
+--the sysback_user with privilege of "sysbackup"  can query as like sys user
+
+RMAN> select name from v$database;
+
+RMAN> select * from hr.employees;
+
+
+
+Database Linking to another db
+------------------------------
+
+--add a tns in 19c db
+DBA16711G_TNS =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST =192.168.1.11)(PORT = 1521))
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.11)(PORT = 1522))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = dba16711g)
+    )
+  )
+  
+--create a new user for dblink in 11g
+SQL> create user dblink 
+identified by dblink;
+  
+SQL> grant create session,resource to dblink;
+
+SQL> grant unlimited tablespace to dblink;
+
+
+--in 19c and sysdba
+SQL> create public database link mylink
+connect to dblink identified by dblin  2  k
+using   3  'dba16711g_tns';
+
+Database link created.
+
+
+SQL> select *from dual@mylink;
+
+D
+-
+X
+
+--now connect the user in 11g
+SQL> conn dblink/dblink
+Connected.
+SQL> create table empl(id number, name varchar2(50));
+
+Table created.
+
+SQL> insert into empl values(1,'Roha');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+--go to 19c and query to 
+SQL> select *from empl@mylink;
+
+        ID NAME
+---------- --------------------------------------------------
+         1 Roha
+
+SQL> insert into empl values(2,'Jui');
+insert into empl values(2,'Jui')
+            *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> insert into empl@mylink values(2,'Jui');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+--now try to query on 11g
+SQL> select *From empl;
+
+        ID NAME
+---------- --------------------------------------------------
+         2 Jui
+         1 Roha
+
+
+
+
+
+
+
+
