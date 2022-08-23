@@ -1,0 +1,83 @@
+
+
+Oracle Enterprise Manager(OEM)
+-----------------------------
+--Configuration:
+If you do not have OEM Configuration and it showing the below error as you can see...
+
+OC4J Configuration issue. /u01/app/11.2.0/grid/sysman/j2ee not found.
+
+then you should try to fix that issue by using below link...
+https://dbatricksworld.com/oracle-enterprise-manager-failed-to-start-oc4j-configuration-issue-configure-enterprise-manager-database-control-manually-with-enterprise-manager-configuration-assistant/
+https://stevecao.wordpress.com/2016/01/10/resolving-oc4j-configuration-issue/
+
+Note: first you need to drop the repo using below command while creating the repo
+[oracle@localhost ~]$ emca -deconfig dbcontrol db -repos drop
+[oracle@prod ~]$ emca -config dbcontrol db -repos create
+
+--If you don't have started the oracle database 
+SQL> startup force
+
+
+--Now start the listener
+[oracle@dba16711g ~]$ lsnrctl start
+
+LSNRCTL for Linux: Version 11.2.0.1.0 - Production on 24-AUG-2022 06:53:37
+
+Copyright (c) 1991, 2009, Oracle.  All rights reserved.
+
+TNS-01106: Listener using listener name LISTENER has already been started
+
+--Check OEM Status
+[oracle@dba16711g ~]$ emctl status dbconsole
+Oracle Enterprise Manager 11g Database Control Release 11.2.0.1.0
+Copyright (c) 1996, 2009 Oracle Corporation.  All rights reserved.
+http://dba16711g:1158/em/console/aboutApplication
+EM Daemon is not running.
+------------------------------------------------------------------
+Logs are generated in directory /u01/app/oracle/product/11.2.0.4/db_1/dba16711g_dba16711g/sysman/log
+
+--Or you can start the OEM by using below command..
+
+[oracle@dba16711g ~]$ emctl start dbconsole
+Oracle Enterprise Manager 11g Database Control Release 11.2.0.1.0
+Copyright (c) 1996, 2009 Oracle Corporation.  All rights reserved.
+http://dba16711g:1158/em/console/aboutApplication
+Starting Oracle Enterprise Manager 11g Database Control .... started.
+------------------------------------------------------------------
+Logs are generated in directory /u01/app/oracle/product/11.2.0.4/db_1/dba16711g_dba16711g/sysman/log
+
+Note: now we will just use the link below in our web browser ...
+http://dba16711g:1158/em/console/aboutApplication
+
+--You need to login with sys or other user like SYSMAN or DBSNMP 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
