@@ -51,6 +51,188 @@ Note: now we will just use the link below in our web browser ...
 http://dba16711g:1158/em/console/aboutApplication
 
 --You need to login with sys or other user like SYSMAN or DBSNMP 
+We will login with sysman user
+
+
+Database Maintenance:
+-------------------------
+
+--Automatic Workload Repository(AWR): 
+	The Automatic Workload Repository (AWR) is a built-in repository in each Oracle database. 
+At regular intervals, the Oracle database server makes a snapshot of all its vital statistics and workload information 
+and stores this data in the AWR. The captured data can be analyzed by you, by the database server itself, or by both.
+
+server/Statistics Management
+		Automatic Workload Repository
+		
+		using edit button we can change retension and interval values
+		
+--To get manual snapshot
+exec dbms_workload_repository.create_snapshot;
+
+
+
+--by command line to generate report 
+
+[oracle@dba16711g admin]$ cd /u01/app/oracle/product/11.2.0.4/db_1/rdbms/admin
+
+[oracle@dba16711g admin]$ ls -larth awrrpt*
+-rw-r--r--. 1 oracle oinstall 2.0K Oct 24  2003 awrrpt.sql
+-rw-r--r--. 1 oracle oinstall 7.4K Apr 18  2005 awrrpti.sql
+
+[oracle@dba16711g admin]$ sqlplus / as sysdba
+
+SQL> @awrrpt.sql
+
+Need to fill up some values
+report type : html
+num of days : 1 
+being and end snapshot:
+
+report name: /home/oracle/awr_report_23_aug_2022.html
+
+****To stop getting snapshots
+ALTER SYSTEM SET statistics_level = "BASIC" SCOPE=MEMORY
+
+
+ADDM(Automatic Database Diagnostic Monitor)
+--------------------------------------------
+server/Related Links
+		Advisor Central
+			Advisors
+				
+		
+		using edit button we can change retension and interval values
+
+
+--by command line to generate report 
+
+[oracle@dba16711g admin]$ cd /u01/app/oracle/product/11.2.0.4/db_1/rdbms/admin
+
+[oracle@dba16711g admin]$ ls -larth addmrpt*
+-rw-r--r--. 1 oracle oinstall 3.1K Oct 15  2003 addmrpt.sql
+-rw-r--r--. 1 oracle oinstall 4.7K Jan  5  2005 addmrpti.sql
+[oracle@dba16711g admin]$ sqlplus / as sysdba
+
+SQL> @addmrpt.sql
+
+Current Instance
+~~~~~~~~~~~~~~~~
+
+   DB Id    DB Name      Inst Num Instance
+----------- ------------ -------- ------------
+ 1537331485 DBA16711            1 dba16711g
+
+
+Instances in this Workload Repository schema
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   DB Id     Inst Num DB Name      Instance     Host
+------------ -------- ------------ ------------ ------------
+* 1537331485        1 DBA16711     dba16711g    dba16711g.re
+                                                jawebs.com
+
+Using 1537331485 for database Id
+Using          1 for instance number
+
+
+Specify the number of days of snapshots to choose from
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Entering the number of days (n) will result in the most recent
+(n) days of snapshots being listed.  Pressing <return> without
+specifying a number lists all completed snapshots.
+
+
+
+Listing the last 3 days of Completed Snapshots
+
+                                                        Snap
+Instance     DB Name        Snap Id    Snap Started    Level
+------------ ------------ --------- ------------------ -----
+dba16711g    DBA16711             1 23 Aug 2022 22:33      1
+
+                                  2 24 Aug 2022 07:03      1
+
+                                  3 24 Aug 2022 08:37      1
+
+                                  4 24 Aug 2022 22:03      1
+
+                                  5 24 Aug 2022 23:00      1
+                                  6 24 Aug 2022 23:01      1
+
+
+
+Specify the Begin and End Snapshot Ids
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enter value for begin_snap: 5
+Begin Snapshot Id specified: 5
+
+Enter value for end_snap: 6
+End   Snapshot Id specified: 6
+
+
+
+Specify the Report Name
+~~~~~~~~~~~~~~~~~~~~~~~
+The default report file name is addmrpt_1_5_6.txt.  To use this name,
+press <return> to continue, otherwise enter an alternative.
+
+Enter value for report_name:/home/oracle/addm_report_23_aug_2022.txt
+
+
+Advisory Framework:
+---------------------
+--SQL Advisor
+
+SQL Advisors
+
+The SQL Advisors address several important use cases having to do with SQL: identify physical structures optimizing a SQL workload, tune individual statements with heavy execution plans, identify and correct result set divergence, build test cases for failed SQL.
+	
+SQL Access Advisor
+Evaluate an entire workload of SQL and recommend indexes, partitioning, materialized views that will improve the collective performance of the SQL workload.
+	
+SQL Tuning Advisor:
+Analyze individual SQL statements, and recommend SQL profiles, statistics, indexes, and restructured SQL to SQL performance.
+Automatic SQL Tuning Results		View the results of automated execution of SQL Tuning Advisor on observed high-load SQL
+
+
+
+
+check execution plan exist or not
+-----------------------------------------
+SQL> select num_rows from dba_tables where table_name='BIG';
+
+  NUM_ROWS
+----------
+ 
+--to allow gather information of a table
+SQL> exec dbms_stats.gather_table_stats('SYS','BIG');
+
+PL/SQL procedure successfully completed. 
+
+
+--let's create a table 
+SQL> create table big as select *from dba_objects;
+
+--now we will run multiple times the below insert statements
+
+
+insert into big select * from big;
+
+/
+
+Again - check execution plan exist or not
+-----------------------------------------
+
+SQL> select num_rows from dba_tables where table_name='BIG';
+
+  NUM_ROWS
+----------
+   1152752
+
+
+
+
 
 
 
