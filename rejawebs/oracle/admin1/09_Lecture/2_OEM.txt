@@ -195,6 +195,7 @@ SQL Tuning Advisor:
 Analyze individual SQL statements, and recommend SQL profiles, statistics, indexes, and restructured SQL to SQL performance.
 Automatic SQL Tuning Results		View the results of automated execution of SQL Tuning Advisor on observed high-load SQL
 
+--let's tour the sql advisor
 
 
 
@@ -230,6 +231,12 @@ SQL> select num_rows from dba_tables where table_name='BIG';
 ----------
    1152752
 
+
+Thresold:
+-------------
+
+Config Url:
+http://dba16711g:1158/em/console/metrics/target/metricThresholds?type=oracle_database&target=dba16711g
 
 
 

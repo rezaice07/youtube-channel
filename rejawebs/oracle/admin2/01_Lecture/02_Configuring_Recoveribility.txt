@@ -1,0 +1,205 @@
+
+Types of RMAN Command
+---------------------------
+
+Stand-Alone Command:
+
+Job Command:
+
+--connect to rman
+[oracle@dba167 ~]$ rman target sys/sydba
+
+--now we will connect to rman with client 
+C:\Users\Reja>rman target sys/sys123@dba167_21_22
+
+--select all rman command
+RMAN> show all;
+
+using target database control file instead of recovery catalog
+RMAN configuration parameters for database with db_unique_name DBA167 are:
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 30 DAYS;
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP OFF;
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 2 BACKUP TYPE TO BACKUPSET;
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE RMAN OUTPUT TO KEEP FOR 7 DAYS; # default
+CONFIGURE ARCHIVELOG DELETION  POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/19.3.0/db_1/dbs/snapcf_dba167.f'; # default
+
+
+--notice that the below command is the retention policy to store recovery in 30 days on control file.
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 30 DAYS;
+
+--let's change retention to 90 days
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 90 DAYS;
+
+--One thing is to remember that you can get rman backup without shutdown the database if we have in archive mode. 
+  Otherwise we must have to shutdown before getting rman backup
+
+
+Viewing Persistent Settings
+----------------------------------
+
+--To see the explicitly changed items 
+
+SQL> select *from v$rman_configuration;
+
+1	RETENTION POLICY	TO RECOVERY WINDOW OF 90 DAYS	0
+2	CONTROLFILE AUTOBACKUP	OFF	0
+3	DEVICE TYPE	DISK PARALLELISM 2 BACKUP TYPE TO BACKUPSET	0
+
+
+Managin Persistent Settings
+----------------------------------
+
+--reseting value by using CLEAR. let's see an example...
+RMAN> CONFIGURE BACKUP OPTIMIZATION CLEAR;
+
+--and value will removed from v$rman_configuration;
+SQL> select *from v$rman_configuration;
+
+
+Specifying a Retention Policy
+-----------------------------------
+
+--Two types of retention policies
+	-Recovery Window:Period of time
+			
+	-Redundency: Fixed number of Backups
+	
+	
+--delete rman backup
+RMAN> DELETE BACKUP;
+
+--Check your backup need or not
+RMAN> report need backup;
+
+--Let's get a backup database
+RMAN> BACKUP DATABASE;
+
+--Now if we try get backup it will show result empty means we don't need backup right now.
+
+RMAN> report need backup;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to recovery window of 90 days
+Report of files that must be backed up to satisfy 90 days recovery window
+File Days  Name
+---- ----- -----------------------------------------------------
+
+--LET'S CHANGE THE RMAN CONFIGURATION
+RMAN>  CONFIGURE RETENTION POLICY TO REDUNDANCY 2;
+
+old RMAN configuration parameters:
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 90 DAYS;
+new RMAN configuration parameters:
+CONFIGURE RETENTION POLICY TO REDUNDANCY 2;
+new RMAN configuration parameters are successfully stored
+
+--SHOWING RESULTS AND WE NEED TO GET BACKUP RIGHT NOW..
+RMAN> REPORT NEED BACKUP;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 2
+Report of files with less than 2 redundant backups
+File #bkps Name
+---- ----- -----------------------------------------------------
+1    1     +DATA/DBA167/DATAFILE/system.257.1107575803
+2    1     +DATA/DBA167/DATAFILE/resumetab01.dbf
+3    1     +DATA/DBA167/DATAFILE/sysaux.258.1107575839
+4    1     +DATA/DBA167/DATAFILE/undotbs1.259.1107575853
+5    1     +DATA/DBA167/DATAFILE/dba167tab1
+7    1     +DATA/DBA167/DATAFILE/users.260.1107575855
+8    1     +DATA/DBA167/DATAFILE/audittab.269.1110732263
+
+--LET'S TRY TO GET BACKUP 
+RMAN> BACKUP DATABASE;
+
+--AND WE CAN SEE THAT WE DON'T NEED ANY BACKUP ON THIS STAGE
+RMAN> REPORT NEED BACKUP;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 2
+Report of files with less than 2 redundant backups
+File #bkps Name
+---- ----- -----------------------------------------------------
+
+
+
+USING FAST RECOVERY AREA
+---------------------------
+
+--LET'S CHECK THE RECOVERY PARAMETERS
+SQL> SHOW PARAMETER DB_RECO
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      +FRA
+db_recovery_file_dest_size           big integer 10G
+
+--LET'S CREATE A BACKUP DIRECTORY TO
+[oracle@dba167 /]$ cd /u01/app/oracle/rmanbkp
+
+--LET'S CHANGE THE BACKUP PATH TO PARAMETER VALUE
+SQL> ALTER SYSTEM SET db_recovery_file_dest='/u01/app/oracle/rmanbkp';
+
+--NOW GET BACKUP
+RMAN> BACKUP DATABASE;
+
+--LET'S WHERE WE CAN LOCATE POSSIBLE BACKUPS
+[oracle@dba167 2022_08_26]$ cd /u01/app/oracle/rmanbkp/DBA167/backupset/2022_08_26
+[oracle@dba167 2022_08_26]$ ll
+total 2178824
+-rw-r-----. 1 oracle asmadmin   10682368 Aug 26 15:50 o1_mf_ncnnf_TAG20220826T155007_kjk5vbjs_.bkp
+-rw-r-----. 1 oracle asmadmin 1461764096 Aug 26 15:50 o1_mf_nnndf_TAG20220826T155007_kjk5tj5z_.bkp
+-rw-r-----. 1 oracle asmadmin  758554624 Aug 26 15:50 o1_mf_nnndf_TAG20220826T155007_kjk5tj8d_.bkp
+-rw-r-----. 1 oracle asmadmin     114688 Aug 26 15:50 o1_mf_nnsnf_TAG20220826T155007_kjk5vbjj_.bkp
+
+--checking oracle FRA space management
+
+
+SQL> desc V$RECOVERY_FILE_DEST
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ NAME                                               VARCHAR2(513)
+ SPACE_LIMIT                                        NUMBER
+ SPACE_USED                                         NUMBER
+ SPACE_RECLAIMABLE                                  NUMBER
+ NUMBER_OF_FILES                                    NUMBER
+ CON_ID                                             NUMBER
+
+--check dest info
+SQL>  select * from V$RECOVERY_FILE_DEST;
+
+"NAME"	                  "SPACE_LIMIT"	"SPACE_USED"	"SPACE_RECLAIMABLE"	"NUMBER_OF_FILES"	"CON_ID"
+"/u01/app/oracle/rmanbkp"	10737418240	 5069561856	       0	                   28	            0
+
+--check FRA usage
+SQL> SELECT * FROM V$RECOVERY_AREA_USAGE;
+
+FILE_TYPE    PERCENT_SPACE_USED  PERCENT_SPACE_RECLAIMABLE  NUMBER_OF_FILES
+------------ ------------------  -------------------------  ---------------
+CONTROLFILE        0                  0                         0
+ONLINELOG          2                  0                         22
+ARCHIVELOG         4.05              2.01                       31
+BACKUPPIECE        3.94              3.86                       8
+IMAGECOPY         15.64              10.43                      66
+FLASHBACKLOG       .08                0                         1
+
+
+
+
+
+
+
+
+
+
+
