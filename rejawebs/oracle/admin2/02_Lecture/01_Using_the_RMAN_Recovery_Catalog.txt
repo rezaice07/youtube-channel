@@ -1,0 +1,124 @@
+
+
+Introduction:
+The RMAN recovery catalog is a schema created inside of a new or existing database that is used to store metadata about Oracle databases.
+So We can store multiple target database backup to this newly created rman catalog database.
+This means that this catalog database is supposed to be as repository.
+
+Create Recovery Catalog
+---------------------------------
+
+--let's check pmon status
+[oracle@dba167 ~]$ ps -ef|grep pmon
+grid       2893      1  0 14:27 ?        00:00:00 asm_pmon_+ASM
+oracle     3015      1  0 14:27 ?        00:00:00 ora_pmon_dba167
+oracle     7938   7871  0 15:35 pts/0    00:00:00 grep --color=auto pmon
+
+01. Tablespace Create and new user for Recovery Catalog
+
+	SQL> create tablespace rmantab datafile size 200M;
+	SQL> create user rman identified by cat default tablespace rmantab;
+	SQL> grant create session,resource to rman;
+	SQL> grant unlimited tablespace to rman;
+
+02. Catalog Ownership
+
+	SQL> grant recovery_catalog_owner to rman;
+	
+
+3. Create Catalog Database
+
+--Before creating database, we will query from user_objects with rman user
+	SQL> conn rman/cat
+	SQL> set lines 300 pages 100
+	SQL> col object_name for a30
+	SQL> col object_type for a30
+	SQL> select object_type,count(*) from user_objects group by object_type;
+
+	no rows selected
+
+	--note there are no results found from above query snipet
+
+--Let's create the catalog database
+		
+	[oracle@dba167 ~]$ rman catalog rman/cat
+
+	RMAN> create catalog;
+	recovery catalog created
+
+--now quer the user_objects
+	SQL> select object_type,count(*) from user_objects group by object_type;
+
+	OBJECT_TYPE                      COUNT(*)
+	------------------------------ ----------
+	INDEX                                 190
+	PACKAGE BODY                            3
+	TYPE BODY                               2
+	TRIGGER                                 4
+	PACKAGE                                 3
+	FUNCTION                                4
+	TYPE                                    6
+	SEQUENCE                                1
+	LOB                                     3
+	TABLE                                  58
+	VIEW                                  101
+
+	11 rows selected.
+
+
+--let'c connect to rman catalog database
+	[oracle@dba167 ~]$ rman target sys/sys123 catalog rman/cat
+
+	connected to target database: DBA167 (DBID=781690275)
+	connected to recovery catalog database
+
+--Now we will register the catalog database
+	RMAN> register database;
+
+	database registered in recovery catalog
+	starting full resync of recovery catalog
+	full resync complete
+	
+Note: to connect by using client 
+rman target sys/sys123@dba167_21_22 catalog rman/cat@dba167_21_22
+
+
+--now we will get backup
+RMAN> backup database;
+
+
+--let's run the below script in rman for generating backup script
+
+RMAN> CREATE GLOBAL SCRIPT global_full_DatabaseBackup_L0
+COMMENT 'User this script to take L0 backup for all target'
+{
+allocate channel c1 type disk;
+allocate channel c2 type disk;
+backup cumulative incremental level 0 format '/u01/app/oracle/rmanbkp/dba167_datafile_L0_%U.bkp' database;
+backup current controlfile format '/u01/app/oracle/rmanbkp/dba167_Controlfile_L0_%U.bkp';
+release channel c1;
+release channel c2;
+}
+
+--results
+created global script global_full_DatabaseBackup_L0
+
+--now connect with rman user on sql developer/toad tools and run below script
+
+SQL> SELECT DB_KEY, DB_NAME, SCRIPT_NAME, SCRIPT_COMMENT FROM RC_STORED_SCRIPT ;
+
+SQL> SELECT DB_KEY, SCRIPT_NAME, LINE, TEXT FROM RC_STORED_SCRIPT_LINE ;
+
+--Note: RC_STORED_SCRIPT,RC_STORED_SCRIPT_LINE both are views
+
+--Now we will run the catalog script for "global_full_DatabaseBackup_L0"
+RUN
+{
+EXECUTE SCRIPT global_full_DatabaseBackup_L0 ;
+}
+
+--if not working then try again.
+
+
+
+

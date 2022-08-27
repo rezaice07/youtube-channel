@@ -1,0 +1,279 @@
+
+
+Performing Backups
+-----------------------
+
+RMAN BACKUP TYPE
+----------------------
+
+--let's take a backup for users tablespace by incremental and level 0 means incremental and full backup
+RMAN> backup incremental level=0 tablespace users;
+
+--let's take a backup for users tablespace by incremental and level 1 means incremental and last level of (level 0) full backup
+RMAN> backup incremental level=1 tablespace users;
+
+--let's take a backup for users tablespace by cumulative incremental and level 0 means cumulative incremental and full backup
+RMAN>  backup cumulative incremental level=0 tablespace users;
+
+--let's take a backup for users tablespace by cumulative incremental and level 1 means cumulative incremental and last level of (level 0) full backup
+RMAN>  backup cumulative incremental level=1 tablespace users;
+
+Incrementally Updated Backups
+-----------------------------
+
+Note : see page 6 - 6
+				RECOVER 								BACKUP
+------------------------								---------------------------------
+Day 1 			Nothing 								Create image copies
+								
+Day 2 			Nothing 								Create incremental level 1
+
+Day 3 and		Recover copies based on incremental		Create incremental level 1
+onward
+
+
+
+SQL> show parameter db_reco
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      /u01/app/oracle/rmanbkp
+db_recovery_file_dest_size           big integer 10G
+
+
+SQL> alter system set db_recovery_file_dest='+FRA';
+ 
+--let's recover copy of database with tag 'daily_inc'
+RMAN> recover copy of database with tag 'daily_inc';
+--As we can see from the above result of this execution, no recovery is found
+
+--Let's get a image backup first
+RMAN> backup incremental level 1 for recover of copy with tag 'daily_inc' database;
+
+--let's recover copy of database with tag 'daily_inc'
+RMAN> recover copy of database with tag 'daily_inc';
+
+--Let's get another image backup
+RMAN> backup incremental level 1 for recover of copy with tag 'daily_inc' database;
+
+
+
+Maintaining Block Change Tracking File
+---------------------------------------
+--let's create a directory with the name of "blkchgtrc"
+
+	[oracle@dba167 ~]$ cd /u01/app/oracle/
+	[oracle@dba167 oracle]$ mkdir blkchgtrc
+
+--let's execute the below command..
+	SQL> 
+	ALTER DATABASE
+	ENABLE BLOCK CHANGE TRACKING
+	USING FILE '/u01/app/oracle/blkchgtrc/blockchangetrace.trc';
+
+	Database altered.
+
+--now observe the directory below
+
+	[oracle@dba167 blkchgtrc]$ cd /u01/app/oracle/blkchgtrc
+
+	[oracle@dba167 blkchgtrc]$ ll
+	total 11332 
+	-rw-r-----. 1 oracle asmadmin 11600384 Aug 28 02:57 blockchangetrace.trc
+
+	--the file blockchangetrace.trc is created and which is in binary format
+
+
+Monitoring Block Change Tracking
+--------------------------------
+
+--let's monitor the block changes
+SQL> SELECT filename, status, (bytes/1024/1024) AS MB FROM v$block_change_tracking;
+
+filename										status  MB
+---------------------------------------------------------------------
+/u01/app/oracle/blkchgtrc/blockchangetrace.trc	ENABLED	11.0625
+
+--let's check backup datafiles where blocks are changed
+SELECT file#,
+  AVG(datafile_blocks),
+  AVG(blocks_read),
+  AVG(blocks_read/datafile_blocks) * 100 AS PCT_READ_FOR_BACKUP,
+  AVG(blocks)
+FROM v$backup_datafile
+WHERE used_change_tracking = 'YES'
+AND incremental_level      > 0
+GROUP BY file#;
+
+--nothing found.
+
+--let's update some information in employees table
+SQL> update hr.employees set salary = salary+100;
+SQL> commit;
+
+--Now we will get incremental backup
+
+RMAN>  backup incremental level=1 tablespace users;
+
+
+--let's check backup datafiles where blocks are changed
+SELECT file#,
+  AVG(datafile_blocks),
+  AVG(blocks_read),
+  AVG(blocks_read/datafile_blocks) * 100 AS PCT_READ_FOR_BACKUP,
+  AVG(blocks)
+FROM v$backup_datafile
+WHERE used_change_tracking = 'YES'
+AND incremental_level      > 0
+GROUP BY file#;
+
+
+
+Reporting on Backups
+--------------------------
+--In detail mode
+	RMAN> list backup;
+
+--In summary
+	RMAN> list backup summary
+
+--Or we can more command from 
+	https://techgoeasy.com/rman-list-backup-commands/
+
+--delete obsolete backups
+	RMAN> delete obsulate;	
+
+
+--for report schema
+	RMAN> report schema;
+
+	Report of database schema for database with db_unique_name DBA167
+
+	List of Permanent Datafiles
+	===========================
+	File Size(MB) Tablespace           RB segs Datafile Name
+	---- -------- -------------------- ------- ------------------------
+	1    930      SYSTEM               YES     +DATA/DBA167/DATAFILE/system.257.1107575803
+	2    20       RESUMETAB            NO      +DATA/DBA167/DATAFILE/resumetab01.dbf
+	3    780      SYSAUX               NO      +DATA/DBA167/DATAFILE/sysaux.258.1107575839
+	4    815      UNDOTBS1             YES     +DATA/DBA167/DATAFILE/undotbs1.259.1107575853
+	5    10       DBA167TAB1           NO      +DATA/DBA167/DATAFILE/dba167tab1
+	7    795      USERS                NO      +DATA/DBA167/DATAFILE/users.260.1107575855
+	8    200      AUDITTAB             NO      +DATA/DBA167/DATAFILE/audittab.269.1110732263
+	9    200      RMANTAB              NO      +DATA/DBA167/DATAFILE/rmantab.271.1113838853
+
+	List of Temporary Files
+	=======================
+	File Size(MB) Tablespace           Maxsize(MB) Tempfile Name
+	---- -------- -------------------- ----------- --------------------
+	1    131      TEMP                 32767       +DATA/DBA167/TEMPFILE/temp.265.1107575917
+
+--for report need backup
+	RMAN> report need backup;
+
+	RMAN retention policy will be applied to the command
+	RMAN retention policy is set to redundancy 2
+	Report of files with less than 2 redundant backups
+	File #bkps Name
+	---- ----- -----------------------------------------------------
+	2    1     +DATA/DBA167/DATAFILE/resumetab01.dbf
+	3    1     +DATA/DBA167/DATAFILE/sysaux.258.1107575839
+	4    1     +DATA/DBA167/DATAFILE/undotbs1.259.1107575853
+	5    1     +DATA/DBA167/DATAFILE/dba167tab1
+	7    1     +DATA/DBA167/DATAFILE/users.260.1107575855
+	8    1     +DATA/DBA167/DATAFILE/audittab.269.1110732263
+	9    1     +DATA/DBA167/DATAFILE/rmantab.271.1113838853
+
+
+--So we do need backup due to 
+
+	File #bkps Name
+	---- ----- -----------------------------------------------------
+	2    1     +DATA/DBA167/DATAFILE/resumetab01.dbf
+	3    1     +DATA/DBA167/DATAFILE/sysaux.258.1107575839
+	4    1     +DATA/DBA167/DATAFILE/undotbs1.259.1107575853
+	5    1     +DATA/DBA167/DATAFILE/dba167tab1
+	7    1     +DATA/DBA167/DATAFILE/users.260.1107575855
+	8    1     +DATA/DBA167/DATAFILE/audittab.269.1110732263
+	9    1     +DATA/DBA167/DATAFILE/rmantab.271.1113838853
+	
+	
+--To delete rman backups
+	RMAN> delete backup;
+	
+--Get a specific backup file
+	RMAN> backup datafile 9;
+	
+--so if you backup again then will show...
+	2    1     +DATA/DBA167/DATAFILE/resumetab01.dbf
+	3    1     +DATA/DBA167/DATAFILE/sysaux.258.1107575839
+	4    1     +DATA/DBA167/DATAFILE/undotbs1.259.1107575853
+	5    1     +DATA/DBA167/DATAFILE/dba167tab1
+	7    1     +DATA/DBA167/DATAFILE/users.260.1107575855
+	8    1     +DATA/DBA167/DATAFILE/audittab.269.1110732263
+	
+
+--Backup Status: Backup Information of last backups;
+	SQL> 
+	SELECT SESSION_KEY "SESSION KEY", INPUT_TYPE "BACKUP TYPE", DECODE(OUTPUT_DEVICE_TYPE,'SBT_TAPE','Disk Backup','Disk Backup') as "DEVICE TYPE",STATUS,
+	to_char(START_TIME,'mm/dd/yy hh24:mi') "START TIME",
+	to_char(END_TIME,'mm/dd/yy hh24:mi')   "END TIME",
+	ROUND(elapsed_seconds/60,2)             MINS,
+	TO_CHAR(OUTPUT_BYTES/1024/1024,'99,99,999') "PIECES SIZE(IN MB)"
+	FROM V$RMAN_BACKUP_JOB_DETAILS
+	WHERE to_char(START_TIME,'mm/dd/yy')IN (to_char(sysdate,'mm/dd/yy'),to_char(sysdate-1,'mm/dd/yy'),to_char(sysdate-2,'mm/dd/yy'),to_char(sysdate-3,'mm/dd/yy'))
+	ORDER by session_key;
+
+
+--expire a backup by deleting
+	ASMCMD> cd +Fra/dba167/backupset
+	ASMCMD> ls
+	2022_08_28/
+	ASMCMD> cd 2022_08_28/
+	ASMCMD> ls
+	nnndf0_TAG20220828T042637_0.266.1113884797
+	nnndf0_TAG20220828T042637_0.267.1113884797	
+	ASMCMD> rm nnndf0_TAG20220828T042637_0.266.1113884797
+
+--Now cross check
+	RMAN> crosscheck backup;
+
+	allocated channel: ORA_DISK_1
+	channel ORA_DISK_1: SID=51 device type=DISK
+	allocated channel: ORA_DISK_2
+	channel ORA_DISK_2: SID=291 device type=DISK
+	crosschecked backup piece: found to be 'AVAILABLE'
+	backup piece handle=+FRA/DBA167/BACKUPSET/2022_08_28/nnndf0_tag20220828t042637_0.267.1113884797 RECID=87 STAMP=1113884797
+	crosschecked backup piece: found to be 'EXPIRED'
+	backup piece handle=+FRA/DBA167/BACKUPSET/2022_08_28/nnndf0_tag20220828t042637_0.266.1113884797 RECID=88 STAMP=1113884797
+	Crosschecked 1 objects
+
+	crosschecked backup piece: found to be 'AVAILABLE'
+	backup piece handle=+FRA/DBA167/AUTOBACKUP/2022_08_28/s_1113884800.280.1113884801 RECID=89 STAMP=1113884800
+	Crosschecked 2 objects
+
+----Found to be 'EXPIRED' on item
+
+--now execute the command below to delete expired backups
+	RMAN> delete expired backup;
+	
+--if we cross check backup and we have no expired items
+	RMAN> crosscheck backup;
+
+	using channel ORA_DISK_1
+	using channel ORA_DISK_2
+	crosschecked backup piece: found to be 'AVAILABLE'
+	backup piece handle=+FRA/DBA167/BACKUPSET/2022_08_28/nnndf0_tag20220828t042637_0.267.1113884797 RECID=87 STAMP=1113884797
+	Crosschecked 1 objects
+
+	crosschecked backup piece: found to be 'AVAILABLE'
+	backup piece handle=+FRA/DBA167/AUTOBACKUP/2022_08_28/s_1113884800.280.1113884801 RECID=89 STAMP=1113884800
+	Crosschecked 1 objects
+
+
+
+
+
+
+
+

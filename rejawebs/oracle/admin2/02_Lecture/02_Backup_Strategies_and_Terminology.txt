@@ -1,0 +1,85 @@
+
+Creating Image Copies
+------------------------------
+
+--Let's check first datafiles
+	SQL DEV > 
+	SELECT FILE_NAME,(bytes/1024/1024) AS MB 
+	FROM dba_data_files
+	order by (bytes/1024/1024) DESC;
+
+--output:
+	+DATA/DBA167/DATAFILE/system.257.1107575803	930
+	+DATA/DBA167/DATAFILE/undotbs1.259.1107575853	815
+	+DATA/DBA167/DATAFILE/users.260.1107575855	795
+	+DATA/DBA167/DATAFILE/sysaux.258.1107575839	780
+	+DATA/DBA167/DATAFILE/rmantab.271.1113838853	200
+	+DATA/DBA167/DATAFILE/audittab.269.1110732263	200
+	+DATA/DBA167/DATAFILE/resumetab01.dbf	20
+	+DATA/DBA167/DATAFILE/dba167tab1	10
+
+
+--let's create a backup for datafile location "+DATA/DBA167/DATAFILE/system.257.1107575803" from above query 
+	RMAN> BACKUP AS COPY DATAFILE '+DATA/DBA167/DATAFILE/system.257.1107575803';
+
+--Backup location resullts is
+	output file name=/u01/app/oracle/rmanbkp/DBA167/datafile/o1_mf_system_kjnm3cx7_.dbf 
+
+--now we will check the backup file 
+	[oracle@dba167 datafile]$ cd /u01/app/oracle/rmanbkp/DBA167/datafile/
+	[oracle@dba167 datafile]$ ls -larth
+	total 931M
+	drwxr-x---. 5 oracle asmadmin   57 Aug 27 22:55 ..
+	drwxr-x---. 2 oracle asmadmin   40 Aug 27 22:55 .
+	-rw-r-----. 1 oracle asmadmin 931M Aug 27 22:55 o1_mf_system_kjnm3cx7_.dbf
+ 
+--Total backup file size is 931M
+
+--Now we will create backup set
+	RMAN> BACKUP AS backupset DATAFILE '+DATA/DBA167/DATAFILE/system.257.1107575803';
+
+--output location of last piece handle is
+	piece handle=/u01/app/oracle/rmanbkp/DBA167/backupset/2022_08_27/o1_mf_nnndf_TAG20220827T230732_kjnmto89_.bkp
+
+--let's check the size of backupset file
+[oracle@dba167 datafile]$ ls -larth /u01/app/oracle/rmanbkp/DBA167/backupset/2022_08_27/o1_mf_nnndf_TAG20220827T230732_kjnmto89_.bkp
+-rw-r-----. 1 oracle asmadmin 809M Aug 27 23:07 /u01/app/oracle/rmanbkp/DBA167/backupset/2022_08_27/o1_mf_nnndf_TAG20220827T230732_kjnmto89_.bkp
+
+--here we can see the reduced backup size is 809M
+
+
+Creating a Whole Database Backup
+----------------------------------
+
+--before creating whole backup, first we need check the control file autobackup on or not
+
+RMAN> show all;
+
+using target database control file instead of recovery catalog
+RMAN configuration parameters for database with db_unique_name DBA167 are:
+CONFIGURE RETENTION POLICY TO REDUNDANCY 2;
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP OFF;
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 2 BACKUP TYPE TO BACKUPSET;
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE RMAN OUTPUT TO KEEP FOR 7 DAYS; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/19.3.0/db_1/dbs/snapcf_dba167.f'; # default
+
+--as we can see in above "CONFIGURE CONTROLFILE AUTOBACKUP OFF;"
+--let's configure it to ON mode..
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP ON;
+
+--we're gonna go to run the below command to get whole backup...
+RMAN> BACKUP DATABASE PLUS ARCHIVELOG;
+
+
+
+
