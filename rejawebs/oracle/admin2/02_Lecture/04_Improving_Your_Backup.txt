@@ -75,3 +75,191 @@ Creating RMAN Multisection Backups
 
 --If we want to specify the path instead of default
 	RMAN> BACKUP format '/u01/app/oracle/multisec/userdatafile_%U.bkp' DATAFILE 1 SECTION SIZE = 200M TAG 'section25mb'; 
+	
+Backing Up the Control File to a Trace File
+-----------------------------------------------
+	
+--let's create a trace for control file
+	SQL> ALTER DATABASE backup controlfile TO trace;
+
+--let's go to trace file
+	[oracle@dba167 trace]$ tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
+
+--Our control file backup location is....
+	Backup controlfile written to trace file /u01/app/oracle/diag/rdbms/dba167/dba167/trace/dba167_ora_4322.trc
+
+--let's tail the above location
+	trail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/dba167_ora_4322.trc
+
+--from above trace file, we can get a script to create control file creation...
+	CREATE CONTROLFILE REUSE DATABASE "DBA167" RESETLOGS  ARCHIVELOG
+		MAXLOGFILES 16
+		MAXLOGMEMBERS 5
+		MAXDATAFILES 100
+		MAXINSTANCES 8
+		MAXLOGHISTORY 292
+	LOGFILE
+	  GROUP 1 (
+		'+DATA/DBA167/ONLINELOG/group_1.262.1107575909',
+		'+FRA/DBA167/ONLINELOG/group_1.257.1107575911'
+	  ) SIZE 200M BLOCKSIZE 512,
+	  GROUP 2 (
+		'+DATA/DBA167/ONLINELOG/group_2.263.1107575909',
+		'+FRA/DBA167/ONLINELOG/group_2.258.1107575911'
+	  ) SIZE 200M BLOCKSIZE 512,
+	  GROUP 3 (
+		'+DATA/DBA167/ONLINELOG/group_3.264.1107575911',
+		'+FRA/DBA167/ONLINELOG/group_3.259.1107575911'
+	  ) SIZE 200M BLOCKSIZE 512
+	-- STANDBY LOGFILE
+	DATAFILE
+	  '+DATA/DBA167/DATAFILE/system.257.1107575803',
+	  '+DATA/DBA167/DATAFILE/resumetab01.dbf',
+	  '+DATA/DBA167/DATAFILE/sysaux.258.1107575839',
+	  '+DATA/DBA167/DATAFILE/undotbs1.259.1107575853',
+	  '+DATA/DBA167/DATAFILE/dba167tab1',
+	  '+DATA/DBA167/DATAFILE/users.260.1107575855',
+	  '+DATA/DBA167/DATAFILE/audittab.269.1110732263',
+	  '+DATA/DBA167/DATAFILE/rmantab.271.1113838853'
+	CHARACTER SET AL32UTF8
+	;
+
+--Before deleting control file we will get backup the control file
+	RMAN> backup database;
+
+--let's delete control file from +DATA AND +FRA
+
+ASMCMD> cd +data/DBA167/CONTROLFILE
+ASMCMD> ls
+Current.261.1107575907
+current03.ctl
+ASMCMD> rm Current.261.1107575907 current03.ctl
+
+ASMCMD> cd +FRA/DBA167/CONTROLFILE
+ASMCMD> ls
+Current.256.1107575907
+current04.ctl
+ASMCMD> rm Current.256.1107575907 current04.ctl
+
+--let's try to start the database and it will fail due to absence of control file
+	SQL> startup
+	ORACLE instance started.
+
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2466250752 bytes
+	Database Buffers         1811939328 bytes
+	Redo Buffers                7868416 bytes
+	ORA-00205: error in identifying control file, check alert log for more info
+	
+--Now we execute the controlfile create script on no mount stage...
+	SQL>  
+	CREATE CONTROLFILE REUSE DATABASE "DBA167" RESETLOGS  ARCHIVELOG
+		MAXLOGFILES 16
+		MAXLOGMEMBERS 5
+		MAXDATAFILES 100
+		MAXINSTANCES 8
+		MAXLOGHISTORY 292
+	LOGFILE
+	  GROUP 1 (
+		'+DATA/DBA167/ONLINELOG/group_1.262.1107575909',
+		'+FRA/DBA167/ONLINELOG/group_1.257.1107575911'
+	  ) SIZE 200M BLOCKSIZE 512,
+	  GROUP 2 (
+		'+DATA/DBA167/ONLINELOG/group_2.263.1107575909',
+		'+FRA/DBA167/ONLINELOG/group_2.258.1107575911'
+	  ) SIZE 200M BLOCKSIZE 512,
+	  GROUP 3 (
+		'+DATA/DBA167/ONLINELOG/group_3.264.1107575911',
+		'+FRA/DBA167/ONLINELOG/group_3.259.1107575911'
+	  ) SIZE 200M BLOCKSIZE 512
+	-- STANDBY LOGFILE
+	DATAFILE
+	  '+DATA/DBA167/DATAFILE/system.257.1107575803',
+	  '+DATA/DBA167/DATAFILE/resumetab01.dbf',
+	  '+DATA/DBA167/DATAFILE/sysaux.258.1107575839',
+	  '+DATA/DBA167/DATAFILE/undotbs1.259.1107575853',
+	  '+DATA/DBA167/DATAFILE/dba167tab1',
+	  '+DATA/DBA167/DATAFILE/users.260.1107575855',
+	  '+DATA/DBA167/DATAFILE/audittab.269.1110732263',
+	  '+DATA/DBA167/DATAFILE/rmantab.271.1113838853'
+	CHARACTER SET AL32UTF8
+	;
+
+--Result..
+	Control file created.
+	
+--Now we will check the status of database is 
+	SQL> select status from v$instance;
+
+	STATUS
+	------------
+	MOUNTED
+
+--Now open the database using below command..
+	SQL> alter database open;
+	
+-- if you found the below error while executing above command like below ...
+	SQL> alter database open;
+	alter database open
+	*
+	ERROR at line 1:
+	ORA-01589: must use RESETLOGS or NORESETLOGS option for database open
+
+--then execute....
+	SQL> alter database open resetlogs;
+	
+Cataloging Additional Backup Files
+--------------------------------------------------
+
+--Before starting, we wanna delete backups from rmanbkp
+	[oracle@dba167 rmanbkp]$ cd /u01/app/oracle/rmanbkp
+
+	[oracle@dba167 rmanbkp]$ ll
+	drwxr-x---. 6 oracle asmadmin 75 Aug 27 23:18 DBA167
+	[oracle@dba167 rmanbkp]$ rm -rf DBA167
+
+--now get backup for tablespace users...
+	RMAN> backup incremental level=0 format='/u01/app/oracle/rmanbkp/dba167_database_%u.bkp' tablespace users;
+
+--check backup in directory
+	[oracle@dba167 rmanbkp]$ ll
+	total 733856
+	-rw-r-----. 1 oracle asmadmin 751468544 Aug 28 23:45 dba167_database_0216b604.bkp
+
+--Now we will create a new location to backup and move the last backup to new location newloc/
+	[oracle@dba167 rmanbkp]$ mkdir newloc
+	[oracle@dba167 rmanbkp]$ mv dba167_database_0216b604.bkp newloc/
+
+	[oracle@dba167 rmanbkp]$ cd newloc/
+	[oracle@dba167 newloc]$ ll
+	total 733856
+	-rw-r-----. 1 oracle asmadmin 751468544 Aug 28 23:45 dba167_database_0216b604.bkp
+
+--now we will off the tablespace users by RMAN command...
+	RMAN> sql 'alter tablespace users offline';
+	
+	using target database control file instead of recovery catalog
+	sql statement: alter tablespace users offline
+
+	RMAN> restore tablespace users;
+
+	RMAN-06023: no backup or copy of datafile 7 found to restore
+	
+--The restore command not working because of backup loaction change...so we can fix this by using below command...
+	
+	RMAN> catalog start with '/u01/app/oracle/rmanbkp/newloc'
+	
+--Now we will execute restore command
+	RMAN> restore tablespace users;
+
+	RMAN> recover tablespace users;
+	
+	RMAN> sql 'alter tablespace users online';
+
+
+
+	
+
+
+
