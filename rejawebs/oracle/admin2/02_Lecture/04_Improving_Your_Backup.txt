@@ -1,0 +1,77 @@
+
+Compressing Backups
+-----------------------
+--It will take a litte bit more time compared with normal backup process, let's execture the following command
+	RMAN> backup as compressed backupset database;
+	
+--Let's change the compress algorithm value basic to high
+
+	RMAN> show all;
+
+	RMAN configuration parameters for database with db_unique_name DBA167 are:
+	CONFIGURE RETENTION POLICY TO REDUNDANCY 2;
+	CONFIGURE BACKUP OPTIMIZATION OFF; # default
+	CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+	CONFIGURE CONTROLFILE AUTOBACKUP ON;
+	CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+	CONFIGURE DEVICE TYPE DISK PARALLELISM 2 BACKUP TYPE TO BACKUPSET;
+	CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+	CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+	CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+	CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+	CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+	CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+	CONFIGURE RMAN OUTPUT TO KEEP FOR 7 DAYS; # default
+	CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+	CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/19.3.0/db_1/dbs/snapcf_dba167.f'; # default
+
+--configure now...
+	RMAN> CONFIGURE COMPRESSION ALGORITHM 'HIGH'  AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ;
+
+	new RMAN configuration parameters:
+	CONFIGURE COMPRESSION ALGORITHM 'HIGH' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE;
+	new RMAN configuration parameters are successfully stored
+
+
+--It will take a litte bit more time compared with normal backup process, let's execture the following command
+
+--Before executing command, run below script first to track backup status
+	SQL>
+	
+	SELECT SESSION_KEY "SESSION KEY",INPUT_TYPE "BACKUP TYPE", DECODE(OUTPUT_DEVICE_TYPE,'SBT_TAPE','Disk Backup','Disk Backup') as "DEVICE TYPE",STATUS,
+	to_char(START_TIME,'mm/dd/yy hh24:mi') "START TIME",
+	to_char(END_TIME,'mm/dd/yy hh24:mi')   "END TIME",
+	ROUND(elapsed_seconds/60,2)             MINS,
+	TO_CHAR(OUTPUT_BYTES/1024/1024,'99,99,999') "PIECES SIZE(IN MB)"
+	FROM V$RMAN_BACKUP_JOB_DETAILS
+	WHERE to_char(START_TIME,'mm/dd/yy')IN (to_char(sysdate,'mm/dd/yy'),to_char(sysdate-1,'mm/dd/yy'),to_char(sysdate-2,'mm/dd/yy'),to_char(sysdate-3,'mm/dd/yy'))
+	ORDER by session_key;
+	
+	
+	RMAN> backup as compressed backupset database;
+	
+--Recomendataion: BASIC is default and recomended.
+
+Creating RMAN Multisection Backups
+---------------------------------------
+
+--let's check data files
+	SQL> SELECT *FROM DBA_DATA_FILES;
+	+DATA/DBA167/DATAFILE/system.257.1107575803	1	SYSTEM	975175680	119040	AVAILABLE
+	+DATA/DBA167/DATAFILE/sysaux.258.1107575839	3	SYSAUX	817889280	99840	AVAILABLE
+	+DATA/DBA167/DATAFILE/undotbs1.259.1107575853	4	UNDOTBS1	854589440	104320	AVAILABLE
+	+DATA/DBA167/DATAFILE/users.260.1107575855	7	USERS	833617920	101760	AVAILABLE
+	+DATA/DBA167/DATAFILE/dba167tab1	5	DBA167TAB1	10485760	1280	AVAILABLE
+	+DATA/DBA167/DATAFILE/resumetab01.dbf	2	RESUMETAB	20971520	2560	AVAILABLE
+	+DATA/DBA167/DATAFILE/audittab.269.1110732263	8	AUDITTAB	209715200	25600	AVAILABLE
+	+DATA/DBA167/DATAFILE/rmantab.271.1113838853	9	RMANTAB	209715200	25600	AVAILABLE
+
+--let get backup for datafile 1
+	RMAN> BACKUP DATAFILE 1 SECTION SIZE = 25M TAG 'section25mb';
+
+
+--Le'ts create a pathe with the name of multisec
+	[oracle@dba167 ~]$ mkdir /u01/app/oracle/multisec
+
+--If we want to specify the path instead of default
+	RMAN> BACKUP format '/u01/app/oracle/multisec/userdatafile_%U.bkp' DATAFILE 1 SECTION SIZE = 200M TAG 'section25mb'; 
