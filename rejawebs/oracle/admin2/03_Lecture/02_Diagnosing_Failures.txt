@@ -1,0 +1,102 @@
+
+Data Recovery Advisor RMAN Command-Line Interface
+-------------------------------------------------------
+
+--let's check datafile
+SQL> select name from v$datafile;
+
+NAME
+----------------------------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1107575803
++DATA/DBA167/DATAFILE/resumetab01.dbf
++DATA/DBA167/DATAFILE/sysaux.258.1107575839
++DATA/DBA167/DATAFILE/undotbs1.259.1107575853
++DATA/DBA167/DATAFILE/dba167tab1
++DATA/DBA167/DATAFILE/users.260.1107575855
++DATA/DBA167/DATAFILE/audittab.269.1110732263
++DATA/DBA167/DATAFILE/rmantab.271.1113838853
+
+8 rows selected.
+
+--first we need to create directory like "/u01/app/oracle/oradata/"
+[oracle@dba167 /]$ mkdir /u01/app/oracle/oradata/
+
+--now we will create a tablespace
+	SQL> create tablespace TEST_CORP_TAB DATAFILE '/u01/app/oracle/oradata/test_corp_tab01.dbf' size 10M;
+
+--Let's create a table test_corp in hr schema
+	SQL> create table hr.test_corp (id number, name varchar2(50)) tablespace TEST_CORP_TAB;
+
+--Insert some data into test_corp table
+	SQL> insert into hr.test_corp values(1,'Roha');
+	SQL> Commit;
+	
+--select data form test_corp
+	SQL> select *From hr.test_corp;
+
+--let's query from DBA_SEGMENTS
+	SQL> select HEADER_BLOCK FROM DBA_SEGMENTS WHERE SEGMENT_NAME='TEST_CORP' AND OWNER='HR';
+
+	HEADER_BLOCK
+	------------
+			 130
+
+
+--Now we will add some incorrect information to datafile "test_corp_tab01.dbf". let's do it by root user
+
+dd of=/u01/app/oracle/oradata/test_corp_tab01.dbf bs=8192 conv=notrunc seek=131 << EOF
+Give me Corruption !!Give me Corruption !!Give me Corruption !!Give me Corruption !!
+Give me Corruption !!Give me Corruption !!Give me Corruption !!Give me Corruption !!
+Give me Corruption !!Give me Corruption !!Give me Corruption !!Give me Corruption !!
+EOF
+
+--let's flush the buffer_cache
+	SQL> alter system flush buffer_cache;
+
+	System altered.
+
+--select data form test_corp
+	SQL> select *From hr.test_corp;
+
+	select *From hr.test_corp
+		   *
+	ERROR at line 1:
+	ORA-01578: ORACLE data block corrupted (file # 10, block # 131)
+	ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+	
+--Now we should follow some steps
+	RMAN Command Action
+	----------------------------
+	LIST FAILURE: Lists previously executed failure assessment
+	ADVISE FAILURE: Displays recommended repair option
+	REPAIR FAILURE: Repairs and closes failures (after ADVISE in the same	RMAN session)	
+	
+	
+	01. 
+	RMAN> LIST FAILURE;
+
+	Database Role: PRIMARY
+
+	List of Database Failures
+	=========================
+
+	Failure ID Priority Status    Time Detected Summary
+	---------- -------- --------- ------------- -------
+	3562       HIGH     OPEN      29-AUG-22     Datafile 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf' contains one or more corrupt blocks
+
+	02. 
+	RMAN> ADVISE FAILURE;
+
+	--we can see advice
+	[root@dba167 ~]# vi  /u01/app/oracle/diag/rdbms/dba167/dba167/hm/reco_815184686.hm
+
+	03. 	
+	RMAN> REPAIR FAILURE;
+	
+--now we can query
+	SQL> select *From hr.test_corp;
+
+			ID NAME
+	---------- ----------------------------------------------------------------------------------------------------
+			 1 Roha
+
