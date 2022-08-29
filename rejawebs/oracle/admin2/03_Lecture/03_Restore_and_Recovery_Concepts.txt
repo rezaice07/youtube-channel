@@ -1,0 +1,27 @@
+
+--Some restore Command using rman
+	Restoring:
+	• Database (all data files)
+	• Tablespaces
+	• Control files
+	• Archived redo logs
+	• Server parameter files
+	
+--So Restore backup means last backup will be restored 
+--On the other hand, Recovering means last changes from redo log
+
+Note: sys and redo log are critical and others are non critical files.
+
+Using RMAN RESTORE and RECOVER Commands
+-----------------------------------------------
+	• RESTORE command: Restores database files from backup
+	• RECOVER command: Recovers restored files by applying changes recorded in incremental backups and redo log files
+
+	RMAN> ALTER TABLESPACE inv_tbs OFFLINE IMMEDIATE;
+	RMAN> RESTORE TABLESPACE inv_tbs;
+	RMAN> RECOVER TABLESPACE inv_tbs;
+	RMAN> ALTER TABLESPACE inv_tbs ONLINE;
+	
+	
+	
+	
