@@ -23,182 +23,189 @@ Using RMAN RESTORE and RECOVER Commands
 	RMAN> ALTER TABLESPACE inv_tbs ONLINE;
 	
 
+--let's select tablespaces
 
+	SQL> select *from v$tablespace;
 
-SQL> select *from v$tablespace ;
+		   TS# NAME                           INC BIG FLA ENC     CON_ID
+	---------- ------------------------------ --- --- --- --- ----------
+			 0 SYSTEM                         YES NO  YES              0
+			 7 RESUMETAB                      YES NO  YES              0
+			 1 SYSAUX                         YES NO  YES              0
+			 2 UNDOTBS1                       YES NO  YES              0
+			 6 DBA167TAB1                     YES NO  YES              0
+			 4 USERS                          YES NO  YES              0
+			 8 AUDITTAB                       YES NO  YES              0
+			 9 RMANTAB                        YES NO  YES              0
+			 3 TEMP                           NO  NO  YES              0
+			10 TEST_CORP_TAB                  YES NO  YES              0
 
-       TS# NAME                           INC BIG FLA ENC     CON_ID
----------- ------------------------------ --- --- --- --- ----------
-         0 SYSTEM                         YES NO  YES              0
-         7 RESUMETAB                      YES NO  YES              0
-         1 SYSAUX                         YES NO  YES              0
-         2 UNDOTBS1                       YES NO  YES              0
-         6 DBA167TAB1                     YES NO  YES              0
-         4 USERS                          YES NO  YES              0
-         8 AUDITTAB                       YES NO  YES              0
-         9 RMANTAB                        YES NO  YES              0
-         3 TEMP                           NO  NO  YES              0
-        10 TEST_CORP_TAB                  YES NO  YES              0
+	10 rows selected.
 
-10 rows selected.
+--now we will query from this hr.test_corp table
 
-SQL> select *from hr.test_corp;
+	SQL> select *from hr.test_corp;
 
-        ID NAME
----------- --------------------------------------------------
-         1 Roha
+			ID NAME
+	---------- --------------------------------------------------
+			 1 Roha
 
+--before dropting datafile, we will get backup the tablespace test_corp_tab
 
-RMAN> backup tablespace test_corp_tab;
+	RMAN> backup tablespace test_corp_tab;
 
-SQL> select name from v$datafile;
+--now we will check datafile locations from v$datafile
 
-NAME
---------------------------------------------------------------------------------
-+DATA/DBA167/DATAFILE/system.257.1107575803
-+DATA/DBA167/DATAFILE/resumetab01.dbf
-+DATA/DBA167/DATAFILE/sysaux.258.1107575839
-+DATA/DBA167/DATAFILE/undotbs1.259.1107575853
-+DATA/DBA167/DATAFILE/dba167tab1
-+DATA/DBA167/DATAFILE/users.260.1107575855
-+DATA/DBA167/DATAFILE/audittab.269.1110732263
-+DATA/DBA167/DATAFILE/rmantab.271.1113838853
-/u01/app/oracle/oradata/test_corp_tab01.dbf
+	SQL> select name from v$datafile;
 
-9 rows selected.
+	NAME
+	--------------------------------------------------------------------------------
+	+DATA/DBA167/DATAFILE/system.257.1107575803
+	+DATA/DBA167/DATAFILE/resumetab01.dbf
+	+DATA/DBA167/DATAFILE/sysaux.258.1107575839
+	+DATA/DBA167/DATAFILE/undotbs1.259.1107575853
+	+DATA/DBA167/DATAFILE/dba167tab1
+	+DATA/DBA167/DATAFILE/users.260.1107575855
+	+DATA/DBA167/DATAFILE/audittab.269.1110732263
+	+DATA/DBA167/DATAFILE/rmantab.271.1113838853
+	/u01/app/oracle/oradata/test_corp_tab01.dbf
 
+	9 rows selected.
 
+--let's locate the datafile of tablespace test_corp_tab
 
-[oracle@dba167 ~]$ cd /u01/app/oracle/oradata/
-[oracle@dba167 oradata]$ ll
-total 10248
--rw-r-----. 1 oracle asmadmin 10493952 Aug 30 13:37 test_corp_tab01.dbf
+	[oracle@dba167 ~]$ cd /u01/app/oracle/oradata/
+	[oracle@dba167 oradata]$ ll
+	total 10248
+	-rw-r-----. 1 oracle asmadmin 10493952 Aug 30 13:37 test_corp_tab01.dbf
 
-[oracle@dba167 oradata]$ rm test_corp_tab01.dbf
-[oracle@dba167 oradata]$ ll
+--let's delete the datafile from above listing..
+	[oracle@dba167 oradata]$ rm test_corp_tab01.dbf
 
+--now we will flush buffer cache
+	SQL> alter system flush buffer_cache;
 
+--let's select data from test_corp table
+	SQL> select * from hr.test_corp;
+	select * from hr.test_corp
+					 *
+	ERROR at line 1:
+	ORA-01116: error in opening database file 10
+	ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+	ORA-27041: unable to open file
+	Linux-x86_64 Error: 2: No such file or directory
+	Additional information: 3
 
-SQL> alter system flush butter_cache;
+--Now we wanna shutdown the database using rman and sys user....
+	RMAN> shutdown immediate;
 
-
-SQL> select * from hr.test_corp;
-select * from hr.test_corp
-                 *
-ERROR at line 1:
-ORA-01116: error in opening database file 10
-ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
-ORA-27041: unable to open file
-Linux-x86_64 Error: 2: No such file or directory
-Additional information: 3
-
-
-RMAN> shutdown immediate;
-
-using target database control file instead of recovery catalog
-RMAN-00571: ===========================================================
-RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
-RMAN-00571: ===========================================================
-RMAN-03002: failure of shutdown command at 08/30/2022 13:41:46
-ORA-01116: error in opening database file 10
-ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
-ORA-27041: unable to open file
-Linux-x86_64 Error: 2: No such file or directory
-Additional information: 3
+	using target database control file instead of recovery catalog
+	RMAN-00571: ===========================================================
+	RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+	RMAN-00571: ===========================================================
+	RMAN-03002: failure of shutdown command at 08/30/2022 13:41:46
+	ORA-01116: error in opening database file 10
+	ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+	ORA-27041: unable to open file
+	Linux-x86_64 Error: 2: No such file or directory
+	Additional information: 3
 
 	
-SQL> shutdown immediate;
-ORA-01116: error in opening database file 10
-ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
-ORA-27041: unable to open file
-Linux-x86_64 Error: 2: No such file or directory
-Additional information: 3
-	
+	SQL> shutdown immediate;
+	ORA-01116: error in opening database file 10
+	ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+	ORA-27041: unable to open file
+	Linux-x86_64 Error: 2: No such file or directory
+	Additional information: 3
 
---The shutdown not working because the database do not open missing file. So we need to abort shutdown option to resolve this issue... 
+--Note: The shutdown operation not working because the database do not open missing datafile file. 
+--So we need to abort shutdown option to resolve this issue... 
+	SQL> shutdown abort
+	ORACLE instance shut down.
 
-SQL> shutdown abort
-ORACLE instance shut down.
-SQL>
+--Startup database now...
 
+	SQL> startup
+	ORACLE instance started.
 
-SQL> startup
-ORACLE instance started.
+	Total System Global Area 4294963272 bytes
+	Fixed Size                  8904776 bytes
+	Variable Size            2466250752 bytes
+	Database Buffers         1811939328 bytes
+	Redo Buffers                7868416 bytes
+	Database mounted.
+	ORA-01157: cannot identify/lock data file 10 - see DBWR trace file
+	ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
 
-Total System Global Area 4294963272 bytes
-Fixed Size                  8904776 bytes
-Variable Size            2466250752 bytes
-Database Buffers         1811939328 bytes
-Redo Buffers                7868416 bytes
-Database mounted.
-ORA-01157: cannot identify/lock data file 10 - see DBWR trace file
-ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+-- The error "ORA-01110: data file 10: " arised.
 
+--Now we gonna to offile the datafile with number 10(this is the datafile no)
+	SQL> alter database datafile 10 offline;
 
-SQL> alter database datafile 10 offline;
+	Database altered.
 
-Database altered.
+	--Now we will open the database using below command..
+	SQL> alter database open;
 
-SQL> alter database open;
+	Database altered.
 
-Database altered.
+--So if we execute the select statement for test_corp and it will give an error....
+	SQL> select *from hr.test_corp;
+	select *from hr.test_corp
+					*
+	ERROR at line 1:
+	ORA-00376: file 10 cannot be read at this time
+	ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
 
+--So haw to do we resolve this issue? let's restore the tablespace
 
-SQL> select *from hr.test_corp;
-select *from hr.test_corp
-                *
-ERROR at line 1:
-ORA-00376: file 10 cannot be read at this time
-ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+	RMAN> restore tablespace test_corp_tab;
 
+	Starting restore at 30-AUG-22
+	using target database control file instead of recovery catalog
+	allocated channel: ORA_DISK_1
+	channel ORA_DISK_1: SID=38 device type=DISK
 
+	channel ORA_DISK_1: starting datafile backup set restore
+	channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+	channel ORA_DISK_1: restoring datafile 00010 to /u01/app/oracle/oradata/test_corp_tab01.dbf
+	channel ORA_DISK_1: reading from backup piece +FRA/DBA167/BACKUPSET/2022_08_30/nnndf0_tag20220830t021552_0.337.1114049753
+	channel ORA_DISK_1: piece handle=+FRA/DBA167/BACKUPSET/2022_08_30/nnndf0_tag20220830t021552_0.337.1114049753 tag=TAG20220830T021552
+	channel ORA_DISK_1: restored backup piece 1
+	channel ORA_DISK_1: restore complete, elapsed time: 00:00:01
+	Finished restore at 30-AUG-22
 
-RMAN> restore tablespace test_corp_tab;
+--As we can see that the file restored from rman backkup and let's check it...
+	[oracle@dba167 oradata]$ ll
+	total 10248
+	-rw-r-----. 1 oracle asmadmin 10493952 Aug 30 13:49 test_corp_tab01.dbf
 
-Starting restore at 30-AUG-22
-using target database control file instead of recovery catalog
-allocated channel: ORA_DISK_1
-channel ORA_DISK_1: SID=38 device type=DISK
+--now we need to recover by using the following rman command
 
-channel ORA_DISK_1: starting datafile backup set restore
-channel ORA_DISK_1: specifying datafile(s) to restore from backup set
-channel ORA_DISK_1: restoring datafile 00010 to /u01/app/oracle/oradata/test_corp_tab01.dbf
-channel ORA_DISK_1: reading from backup piece +FRA/DBA167/BACKUPSET/2022_08_30/nnndf0_tag20220830t021552_0.337.1114049753
-channel ORA_DISK_1: piece handle=+FRA/DBA167/BACKUPSET/2022_08_30/nnndf0_tag20220830t021552_0.337.1114049753 tag=TAG20220830T021552
-channel ORA_DISK_1: restored backup piece 1
-channel ORA_DISK_1: restore complete, elapsed time: 00:00:01
-Finished restore at 30-AUG-22
+	RMAN> recover tablespace test_corp_tab;
 
+	Starting recover at 30-AUG-22
+	using target database control file instead of recovery catalog
+	allocated channel: ORA_DISK_1
+	channel ORA_DISK_1: SID=24 device type=DISK
 
-[oracle@dba167 oradata]$ ll
-total 10248
--rw-r-----. 1 oracle asmadmin 10493952 Aug 30 13:49 test_corp_tab01.dbf
+	starting media recovery
+	media recovery complete, elapsed time: 00:00:00
 
+	Finished recover at 30-AUG-22
 
+--And Now we have to online the tablespace "test_corp_tab"
+	RMAN>  sql 'alter tablespace test_corp_tab online';
 
-RMAN> recover tablespace test_corp_tab;
+	sql statement: alter tablespace test_corp_tab online
 
-Starting recover at 30-AUG-22
-using target database control file instead of recovery catalog
-allocated channel: ORA_DISK_1
-channel ORA_DISK_1: SID=24 device type=DISK
+--Let's execute the following operation...
 
-starting media recovery
-media recovery complete, elapsed time: 00:00:00
+	SQL>  select * from hr.test_corp;
 
-Finished recover at 30-AUG-22
-
-RMAN>  sql 'alter tablespace test_corp_tab online';
-
-sql statement: alter tablespace test_corp_tab online
-
-
-
-SQL>  select * from hr.test_corp;
-
-        ID NAME
----------- --------------------------------------------------
-         1 Roha
+			ID NAME
+	---------- --------------------------------------------------
+			 1 Roha
 
 
 ############################################################
