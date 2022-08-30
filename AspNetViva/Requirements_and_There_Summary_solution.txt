@@ -62,7 +62,7 @@ Roadmap:
 				So, first of all need to register the client in oauth server
 			
 			01. Register a Client
-				On registering a client, this will create an application as we as register the redirect url,
+				On registering a client, this will create an application as well as register the redirect url,
 				client id,client_secret, user account like login user and password
 								
 				Client Registration
