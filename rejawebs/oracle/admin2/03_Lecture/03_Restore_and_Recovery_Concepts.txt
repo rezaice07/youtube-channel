@@ -210,6 +210,39 @@ Using RMAN RESTORE and RECOVER Commands
 
 ############################################################
 
+	SQL> show parameter undo
+
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	temp_undo_enabled                    boolean     FALSE
+	undo_management                      string      AUTO
+	undo_retention                       integer     3600
+	undo_tablespace                      string      UNDOTBS1
+
+
+
+	SQL> select file_name,tablespace_name from dba_data_files;
+
+	file_name										tablespace_name
+	---------------------------------------------------------------------
+	+DATA/DBA167/DATAFILE/system.257.1107575803		SYSTEM
+	+DATA/DBA167/DATAFILE/sysaux.258.1107575839		SYSAUX
+	+DATA/DBA167/DATAFILE/undotbs1.259.1107575853	UNDOTBS1
+	+DATA/DBA167/DATAFILE/users.260.1107575855		USERS
+	+DATA/DBA167/DATAFILE/dba167tab1				DBA167TAB1
+	+DATA/DBA167/DATAFILE/resumetab01.dbf			RESUMETAB
+	+DATA/DBA167/DATAFILE/audittab.269.1110732263	AUDITTAB
+	+DATA/DBA167/DATAFILE/rmantab.271.1113838853	RMANTAB
+	/u01/app/oracle/oradata/test_corp_tab01.dbf		TEST_CORP_TAB
+
+
+--let's create a undo tablespace
+
+	SQL> create undo tablespace UNDOTAB2 datafile '/u01/app/oracle/oradata/undotab201.dbf' size 10M autoextend on;
+
+	Tablespace created.
+
+--Show parameter's of undo
 SQL> show parameter undo
 
 NAME                                 TYPE        VALUE
@@ -219,41 +252,12 @@ undo_management                      string      AUTO
 undo_retention                       integer     3600
 undo_tablespace                      string      UNDOTBS1
 
-
-
-SQL> select file_name,tablespace_name from dba_data_files;
-
-file_name										tablespace_name
----------------------------------------------------------------------
-+DATA/DBA167/DATAFILE/system.257.1107575803		SYSTEM
-+DATA/DBA167/DATAFILE/sysaux.258.1107575839		SYSAUX
-+DATA/DBA167/DATAFILE/undotbs1.259.1107575853	UNDOTBS1
-+DATA/DBA167/DATAFILE/users.260.1107575855		USERS
-+DATA/DBA167/DATAFILE/dba167tab1				DBA167TAB1
-+DATA/DBA167/DATAFILE/resumetab01.dbf			RESUMETAB
-+DATA/DBA167/DATAFILE/audittab.269.1110732263	AUDITTAB
-+DATA/DBA167/DATAFILE/rmantab.271.1113838853	RMANTAB
-/u01/app/oracle/oradata/test_corp_tab01.dbf		TEST_CORP_TAB
-
-
-
-SQL> create undo tablespace UNDOTAB2 datafile '/u01/app/oracle/oradata/undotab201.dbf' size 10M autoextend on;
-
-Tablespace created.
-
-
-SQL> show parameter undo
-
-NAME                                 TYPE        VALUE
------------------------------------- ----------- ------------------------------
-temp_undo_enabled                    boolean     FALSE
-undo_management                      string      AUTO
-undo_retention                       integer     3600
-undo_tablespace                      string      UNDOTBS1
+--Let's alter undo tablespace
 SQL> alter system set undo_tablespace='UNDOTAB2';
 
 System altered.
 
+--now check the tablespace info 
 SQL> show parameter undo;
 
 NAME                                 TYPE        VALUE
@@ -263,3 +267,171 @@ undo_management                      string      AUTO
 undo_retention                       integer     3600
 undo_tablespace                      string      UNDOTAB2
 SQL>
+
+SQL> create table employees_bak as select *From employees;
+
+Table created.
+
+SQL> select *From employees_bak
+
+SQL> update hr.employees_bak set salary=salary+100;
+
+
+RMAN> delete backup;
+
+RMAN> backup database;
+
+SQL> update hr.employees_bak set salary=salary+100;
+
+
+SQL> commit;
+
+Commit complete.
+
+tail -200f /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
+
+
+[oracle@dba167 oradata]$ rm undotab201.dbf
+
+SQL> alter system flush buffer_cache;
+
+SQL> update hr.employees_bak set salary=salary+100;
+update hr.employees_bak set salary=salary+100
+          *
+ERROR at line 1:
+ORA-01116: error in opening database file 12
+ORA-01110: data file 12: '/u01/app/oracle/oradata/undotab201.dbf'
+ORA-27041: unable to open file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 3
+
+
+SQL> conn hr/hr
+ERROR:
+ORA-01116: error in opening database file 12
+ORA-01110: data file 12: '/u01/app/oracle/oradata/undotab201.dbf'
+ORA-27041: unable to open file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 3
+
+
+Warning: You are no longer connected to ORACLE.
+
+
+SQL> conn / as sysdba
+Connected.
+SQL> shutdown abort
+ORACLE instance shut down.
+
+
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area 2466249672 bytes
+Fixed Size                  8899528 bytes
+Variable Size             536870912 bytes
+Database Buffers         1912602624 bytes
+Redo Buffers                7876608 bytes
+Database mounted.
+ORA-01157: cannot identify/lock data file 12 - see DBWR trace file
+ORA-01110: data file 12: '/u01/app/oracle/oradata/undotab201.dbf'
+
+-- as we can see above messsage and also can view alert logs....
+
+SQL> alter database datafile 12 offline;
+
+Database altered.
+
+
+SQL> alter database open;
+
+
+Database altered.
+
+
+SQL> update hr.employees_bak set salary=salary+100;
+update hr.employees_bak set salary=salary+100
+          *
+ERROR at line 1:
+ORA-01552: cannot use system rollback segment for non-system tablespace 'USERS'
+
+
+
+RMAN> restore tablespace undotab2;
+
+
+RMAN> recover tablespace undotab2;
+
+
+SQL> alter database datafile 12 online;
+
+Database altered.
+
+
+SQL> update hr.employees_bak set salary=salary+100;
+SQL> select *From employees_bak
+
+
+10-9
+
+--relocating datafile using RMAN
+
+RMAN> delete backup
+
+RMAN> backup database;
+
+SQL> SELECT NAME FROM V$DATAFILE;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1106721763
++DATA/DBA167/DATAFILE/testtab101
++DATA/DBA167/DATAFILE/sysaux.258.1106721809
++DATA/DBA167/DATAFILE/undotbs1.259.1106721833
++DATA/DBA167/DATAFILE/dba167tab1
++DATA/DBA167/DATAFILE/users.260.1106721835
++DATA/DBA167/DATAFILE/testtab2.268.1109876153
++FRA/DBA167/DATAFILE/testtab401.dbf
++FRA/DBA167/Backup_DATAFILE/testundo.dbf
+/u01/app/oracle/oradata/test_corp_tab01.dbf
+/u01/app/oracle/oradata/undotab201.dbf
+
+11 rows selected.
+
+
+SQL> shutdown immediate;
+
+SQL> startup mount;
+
+RMAN> 
+run 
+{
+	SET NEWNAME FOR DATAFILE '+DATA/DBA167/DATAFILE/users.260.1106721835' TO '/u01/app/oracle/oradata/users01.dbf';
+	RESTORE DATAFILE 7;
+	SWITCH DATAFILE ALL;
+	RECOVER DATAFILE 7;
+}
+
+SQL> alter database open;
+
+
+SQL> select name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1106721763
++DATA/DBA167/DATAFILE/testtab101
++DATA/DBA167/DATAFILE/sysaux.258.1106721809
++DATA/DBA167/DATAFILE/undotbs1.259.1106721833
++DATA/DBA167/DATAFILE/dba167tab1
+/u01/app/oracle/oradata/users01.dbf
++DATA/DBA167/DATAFILE/testtab2.268.1109876153
++FRA/DBA167/DATAFILE/testtab401.dbf
++FRA/DBA167/Backup_DATAFILE/testundo.dbf
+/u01/app/oracle/oradata/test_corp_tab01.dbf
+/u01/app/oracle/oradata/undotab201.dbf
+
+11 rows selected.
+
+
+Notice that... new location of user data file is "/u01/app/oracle/oradata/users01.dbf"
