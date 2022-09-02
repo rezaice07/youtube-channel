@@ -1,0 +1,41 @@
+ 
+ 
+ What is pl/sql?
+ -------------------
+ PL/SQL (Procedural Language for SQL) is Oracle Corporation's procedural extension for SQL and the Oracle relational database. 
+ PL/SQL is available in Oracle Database (since version 6 - stored PL/SQL procedures/functions/packages/triggers since version 7)
+ 
+ PL/SQL block:
+ -------------
+ A PL/SQL block is defined by the keywords DECLARE , BEGIN , EXCEPTION , and END.
+ These keywords partition the block into a declarative part, an executable part, and an exception-handling part.
+ 
+ DECLARE (OPTIONAL)
+ BIGIN (MENDATORY)
+ 
+	EXCEPTION (OPTIONAL)
+ END;(MENDATORY)
+ 
+ 
+Anonymous Blocks:
+-----------------
+
+--Executing NULL;
+DECLARE
+BEGIN
+  NULL;
+END;
+
+--Let's output  "Hello PL/SQL". Before doing the we need to execute SET serveroutput on in this current session.
+
+SET serveroutput ON;
+/
+DECLARE
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('Hello PL/SQL');
+END;
+/
+
+
+
+ 

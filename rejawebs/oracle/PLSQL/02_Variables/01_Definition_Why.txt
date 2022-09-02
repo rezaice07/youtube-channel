@@ -1,0 +1,29 @@
+
+
+Variable:
+---------
+In PL/SQL, a variable is named storage location that stores a value of a particular data type.
+
+PL/SQL Variable types:
+----------------------
+01. Scaler: stores a single value with one type. Also knonw as simple datatype.
+02. Reference: Reference data types hold value which point to a storage location.
+03. Larger Objects: is also know as LOBs. are also pointers to other data items that are stored outside of the table such as images, files, etc
+04. Composite: These are generally known as collections or records
+
+
+Datatype
+-----------
+	Scalar Datatypes:
+		01. Char(size): if the size of char type is 30 bit, and assign data 10 bit into char type, will take maximun size of 30 bit even the stored data length is 30
+		02. varchar2(size):this is the extended version of char. But in varchar2, 30 means the maximun len
+		03. number(precision,scale): Precision value is 1 and 38 and scale is -84 and 127. if you have 18 and 2 means total 18 digits and 2 of them are the decimal parts.
+		04. Binary_Integer=plsinteger: is faster than number when on arithmatic operation
+		05. Binary_float: 
+		06. BInary double:
+		07. Bolean: in pl/sql is by default null
+		08. Date: sysdate is default can be set
+		09. Timestamp:More details
+		10. Interval(P): year of month or day of secods...
+		
+
