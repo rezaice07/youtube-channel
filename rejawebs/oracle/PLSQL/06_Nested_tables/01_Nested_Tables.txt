@@ -1,0 +1,60 @@
+
+
+Nested Table
+--------------------
+Very Similar with the varrays.
+Compare to varray..
+Key value pairs but in varray use index
+store 2GB at most but in varray fixed size
+allow delete operation but delete not possible in varray
+Nested table are unbounded but in varray is bound and fixed size.
+
+
+
+--Senerio 01: inserting values to a nested table by a string
+
+DECLARE
+type et_list
+IS
+  TABLE OF VARCHAR2(50);
+  nt_list et_list := et_list();
+  v_idx number :=1;
+BEGIN
+    
+  FOR i IN 1..100
+  LOOP
+    nt_list.extend;
+    nt_list(i) :='Dummy Data...'||i;    
+  END LOOP;
+ 
+  FOR i IN 1.. nt_list.count()
+  LOOP
+    dbms_output.put_line(nt_list(i));
+  END LOOP;
+END;
+/
+
+
+--Senerio 02: inserting values to a nested table from table
+
+DECLARE
+type et_list
+IS
+  TABLE OF VARCHAR2(50);
+  nt_list et_list := et_list();
+  v_idx number :=1;
+BEGIN
+  nt_list := et_list();
+  FOR i IN 100..107
+  LOOP
+    nt_list.extend;
+    select last_name into nt_list(v_idx) from employees where employee_id = i;  
+    v_idx := v_idx+1;
+  END LOOP;
+  
+  FOR i IN 1.. nt_list.count()
+  LOOP
+    dbms_output.put_line(nt_list(i));
+  END LOOP;
+END;
+/

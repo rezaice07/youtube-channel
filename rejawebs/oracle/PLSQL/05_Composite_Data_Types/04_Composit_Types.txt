@@ -1,0 +1,121 @@
+
+There are three types of Collections
+01. Nested Table
+02. VArray:
+	=> varray is bounded and fixed size value.
+	=> It's index start with 1
+	=> VArray is one dimentional array
+	=> VArray is null by default
+
+03. Associated Array
+	
+
+Varray
+----------------
+--Senerio 01:
+DECLARE
+type t_list IS varray(5) OF VARCHAR2(100);
+vr_list t_list;
+BEGIN
+  vr_list := t_list('Apple','Microsoft','Oracle','Facebook','AWS');
+  dbms_output.put_line('BY Fixed Size INDEX');
+  dbms_output.put_line('-------------------');
+  dbms_output.put_line(vr_list(1));
+  dbms_output.put_line(vr_list(5));
+  dbms_output.put_line('By Using Loop');
+  dbms_output.put_line('-------------');
+  FOR i IN 1..5
+  LOOP
+    dbms_output.put_line(vr_list(i));
+  END LOOP;
+END;
+/
+--Senerio 02
+DECLARE
+type t_emp_list IS varray(50) OF VARCHAR2(100);
+vr_emp_list t_emp_list;
+BEGIN
+  --if we re-init then we should use extend
+  vr_emp_list := t_emp_list();
+  vr_emp_list.extend(50);
+  FOR i IN 1..50
+  LOOP
+    vr_emp_list(i):= 'My varray data...'||i; --dbms_random.string('U',6);
+  END LOOP;
+  FOR k IN 1..50
+  LOOP
+    dbms_output.put_line(vr_emp_list(k));
+  END LOOP;
+END;
+/
+--Senerio 03
+DECLARE
+type t_list IS varray(5) OF VARCHAR2(100);
+vr_list t_list;
+BEGIN
+  vr_list := t_list('Apple','Microsoft','Oracle','Facebook','AWS');
+  dbms_output.put_line('First Index:');
+  dbms_output.put_line(vr_list.first());
+  dbms_output.put_line('First index:');
+  dbms_output.put_line(vr_list.last());
+  dbms_output.put_line('Total count:');
+  dbms_output.put_line(vr_list.count());
+  --to check is exists items in varray.
+  IF (vr_list.exists(1)=true) THEN
+    BEGIN
+      dbms_output.put_line('Exists items');
+    END;
+  END IF;
+END;
+/
+--Senerio 04
+DECLARE
+  type t_list IS varray(110) OF VARCHAR2(100);
+  vr_list t_list := t_list(); 
+  v_indx number := 1;
+BEGIN
+    
+  for i in 100..106
+  loop
+    vr_list.extend;
+    select last_name into vr_list(v_indx) From employees where employee_id = i;
+    v_indx := v_indx+1;
+  end loop;
+  
+  for k in vr_list.first() .. vr_list.count()
+  loop
+    dbms_output.put_line(vr_list(k));
+  end loop;
+  
+END;
+/
+
+--Senerio 05
+--let's create a type and that can be stored in Type section.
+create or replace type t_list IS varray(107) OF VARCHAR2(100);
+/
+--drop type that we have create in earlier statement.
+drop type t_list;
+/
+--let's see how to we use the created vrray type 
+DECLARE  
+  vr_list t_list := t_list(); 
+  v_indx number := 1;
+BEGIN
+    
+  for i in 100..106
+  loop
+    vr_list.extend;
+    select last_name into vr_list(v_indx) From employees where employee_id = i;
+    v_indx := v_indx+1;
+  end loop;
+  
+  for k in vr_list.first() .. vr_list.count()
+  loop
+    dbms_output.put_line(vr_list(k));
+  end loop;
+  
+END;
+/
+
+

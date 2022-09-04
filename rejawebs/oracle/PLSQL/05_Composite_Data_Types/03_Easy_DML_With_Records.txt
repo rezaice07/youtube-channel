@@ -1,0 +1,82 @@
+
+Easy DML WITH Record
+-------------------------------
+CREATE TABLE Ret_Employees TABLESPACE users AS
+SELECT * FROM employees WHERE 1=2;
+/
+SELECT *FROM Ret_Employees;
+/
+--For Insert
+DECLARE
+  r_emp employees%rowtype;
+BEGIN
+  SELECT * INTO r_emp FROM employees WHERE employee_id=100;
+  INSERT INTO Ret_Employees VALUES r_emp;
+  COMMIT;
+END;
+/
+--For Update
+DECLARE
+  r_emp employees%rowtype;
+BEGIN
+  SELECT * INTO r_emp FROM employees WHERE employee_id=100;
+  r_emp.salary         :=150000;
+  r_emp.commission_pct :=0.3;
+  UPDATE Ret_Employees SET row = r_emp WHERE employee_id=100;
+  COMMIT;
+END;
+/
+SELECT *FROM Ret_Employees;
+/
+--For Delete
+DECLARE
+  r_emp employees%rowtype;
+BEGIN
+  SELECT * INTO r_emp FROM employees WHERE employee_id=100;
+  
+  delete Ret_Employees WHERE employee_id=r_emp.Employee_id;
+  COMMIT;
+END;
+/
+SELECT *FROM Ret_Employees;
+/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

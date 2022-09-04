@@ -49,6 +49,46 @@ BEGIN
 END;
 /
 
+Assigning Type to another type
+------------------------------
+SET serveroutput ON;
+/
+DECLARE
+type t_department
+IS
+  record
+  (
+    department_id   NUMBER,
+    department_name VARCHAR2(100) );
+type t_emp
+IS
+  record
+  (
+    employee_id NUMBER,
+    last_name   VARCHAR2(100),
+    salary      NUMBER(18,2),
+    department t_department );
+  --init t_emp record type
+  r_emp t_emp;
+BEGIN
+  SELECT em.employee_id,
+    em.last_name,
+    em.salary,
+    dp.DEPARTMENT_ID,
+    dp.DEPARTMENT_NAME
+  INTO r_emp.employee_id,
+    r_emp.last_name,
+    r_emp.salary,
+    r_emp.department.department_id,
+    r_emp.department.department_name
+  FROM employees em
+  INNER JOIN departments dp
+  ON em.department_id =dp.department_id
+  WHERE em.employee_id=100;
+  dbms_output.put_line('employee_id :'||r_emp.employee_id ||' last_name:'|| r_emp.last_name ||' salary:'|| r_emp.salary);
+END;
+/
+
 
 
 
