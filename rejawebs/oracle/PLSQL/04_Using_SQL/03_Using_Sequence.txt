@@ -1,0 +1,32 @@
+
+Using Sequence in PL/SQL
+-----------------------
+
+SET serveroutput ON;
+/
+--truncate table first..
+truncate table test_ins_DML;
+
+/
+
+--let's create a new squence
+create sequence test_ins_DML_seq
+start with 1
+increment by 1;
+
+/
+--Use of Sequece for insert DML...
+DECLARE
+  v_totalCount NUMBER :=5000;
+BEGIN
+  FOR i IN 1..v_totalCount
+  LOOP
+    INSERT INTO Test_Ins_DML VALUES
+      (test_ins_DML_seq.nextval,'Test Insert data...'||test_ins_DML_seq.nextval
+      );
+  END LOOP;
+END;
+/
+
+select *from test_ins_dml order by id asc;
+/

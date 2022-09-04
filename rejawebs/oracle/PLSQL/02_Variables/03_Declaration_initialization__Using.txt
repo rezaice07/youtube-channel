@@ -1,0 +1,102 @@
+
+
+Declaration, initialization and Using vairables:
+------------------------------------------------------
+
+--allow serveroutput on only once in a current session...
+SET serveroutput ON;
+/
+
+--Let's try to give an example for varaible declaration, default value, assigning new value
+
+DECLARE
+  v_employee_name VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+BEGIN
+  v_employee_name := 'PL/SQL';
+  DBMS_OUTPUT.PUT_LINE('Hey' || v_employee_name || '! This is Complete Tutorial Series.');
+END;
+/
+
+--example of multiple variable declarations 
+DECLARE
+  v_employee_name         VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+  v_employee_salary       NUMBER(8,2) NOT NULL := 150000.57;
+  v_employee_festiv_bonus NUMBER(8,2);
+BEGIN
+  v_employee_festiv_bonus := 45000;
+  v_employee_salary       := v_employee_salary + v_employee_festiv_bonus;
+  DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your current month salary is ='||v_employee_salary);
+END;
+/
+
+
+--example of pls_integer
+DECLARE
+  v_employee_name VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+  v_employee_salary pls_integer NOT NULL := 150000;
+BEGIN
+  v_employee_salary := v_employee_salary+1000;
+  DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your salary is ='||v_employee_salary);
+END; 
+/
+	
+--example of binary_float. here we can't give precision and scale value of binary_float datatype
+--this type of datatype is being used for scientific purpose. and result may not acccurate as you expect and can be used for large data manipulation.
+
+DECLARE
+  v_employee_name VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+  v_employee_salary binary_float NOT NULL := 150000.78f;
+BEGIN
+  v_employee_salary := v_employee_salary+1000;
+  DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your salary is ='||v_employee_salary);
+END;
+/
+
+
+--example of date
+DECLARE
+  v_employee_name VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+  v_employee_joining_date date  := sysdate;
+  --or 
+  --v_employee_joining_date date  default sysdate;
+BEGIN
+  v_employee_joining_date := '15-Jun-2019';
+  DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your joining date is ='||v_employee_joining_date);
+END;
+/
+
+--Example of timestamp
+DECLARE
+  v_employee_name VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+  v_employee_joining_date date  := sysdate;
+  v_employee_Probition_date timestamp  := sysdate;
+  --or 
+  --v_employee_joining_date date  default sysdate;
+BEGIN
+  v_employee_joining_date := '15-Jun-2019';
+  DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your joining date is ='||v_employee_joining_date||' and your probition time is '|| v_employee_Probition_date);
+END;
+
+
+--Example of Boolen Type
+DECLARE
+  v_employee_name      VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
+  v_employee_Is_Active BOOLEAN;
+BEGIN
+  v_employee_Is_Active  := true;
+  IF v_employee_Is_Active=true THEN
+    BEGIN
+      DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your employment status is active' );
+    END;
+  ELSIF (v_employee_Is_Active=false OR v_employee_Is_Active IS NULL) THEN
+    BEGIN
+      DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your employment status is inactive' );
+    END;
+  ELSE
+    BEGIN
+      DBMS_OUTPUT.PUT_LINE(v_employee_name || '! your employment status is inactive' );
+    END;
+  END IF ;
+END;
+
+	

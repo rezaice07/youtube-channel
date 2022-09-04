@@ -1,0 +1,14 @@
+
+
+Simple vs Composite Data Type
+-----------------------------
+Simple data Type: store single data
+Types are... varchar2(),number, pls_integer,date
+Composite Data Type: store multiple data
+Types are... Record
+--Note: both variable data is stored in PGA memory until the scope end.
+        That's why data fetching is more faster
+		
+
+
+

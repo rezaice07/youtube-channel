@@ -1,0 +1,31 @@
+
+
+Type Atributes
+-------------------
+--If we have employees table with column Job_id with the type is NOT NULL VARCHAR2(10).
+--So the type attribute allows to declare a variable as like Job_id column type 
+DESC employees;
+/
+DECLARE
+  v_Employee_Job_Type employees.job_id%type;
+BEGIN
+  v_Employee_Job_Type := 'IT_PROG';
+  DBMS_OUTPUT.put_line(v_Employee_Job_Type);
+END;
+/
+
+--It will return  an error while trying to assign value to a variable that exceed the max size of job_id. 
+--Let's see an example
+/
+DECLARE
+  v_Employee_Job_Type employees.job_id%type;
+BEGIN
+  v_Employee_Job_Type := 'Administrator';
+  DBMS_OUTPUT.put_line(v_Employee_Job_Type);
+END;
+/
+
+--ORA-06502: PL/SQL: numeric or value error: character string buffer too small
+
+
+

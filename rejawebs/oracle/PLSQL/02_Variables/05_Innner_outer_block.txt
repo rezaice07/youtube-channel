@@ -1,0 +1,77 @@
+
+
+INNER AND OUTER BLOCK
+----------------------
+--01. Let' begin to show how to use varchar2 varible in a block
+DECLARE
+  v_employee_name VARCHAR2(100);
+BEGIN
+  v_employee_name := 'Rejwanul Reja';
+  DBMS_OUTPUT.put_line('Employee Name is '|| v_employee_name);
+END;
+/
+--02. declaration of outer and inner block
+DECLARE
+  v_employee_name VARCHAR2(100) := 'Rejwanul Reja';
+BEGIN
+  DECLARE
+    v_employee_salary NUMBER(18,2) :=125000.00;
+  BEGIN
+    DBMS_OUTPUT.put_line('Inner: Employee Salary is '|| v_employee_salary);
+  END;
+  DBMS_OUTPUT.put_line('Outer: Employee Name is '|| v_employee_name);
+END;
+/
+
+--03. declaration of outer and inner block exception.
+--If we try to use the inner block variable to out then the error will arise
+DECLARE
+  v_employee_name VARCHAR2(100) := 'Rejwanul Reja';
+BEGIN
+  DECLARE
+    v_employee_salary NUMBER(18,2) :=125000.00;
+  BEGIN
+    DBMS_OUTPUT.put_line('Inner: Employee Salary is '|| v_employee_salary);
+  END;
+  DBMS_OUTPUT.put_line('Inner: Employee Salary is '|| v_employee_salary);
+  DBMS_OUTPUT.put_line('Outer: Employee Name is '|| v_employee_name);
+END;
+/
+--PLS-00201: identifier 'V_EMPLOYEE_SALARY' must be declared
+
+
+--04. How to we use the same variable to both inner and outer block
+DECLARE
+  v_employee_name VARCHAR2(200) := 'Rejwanul Reja';
+BEGIN
+  DECLARE
+    v_employee_name VARCHAR2(200) := 'Employee Name: ''Rejwanul Reja''  and Designation: ''Sr. Software Engineer''';
+  BEGIN
+    DBMS_OUTPUT.put_line('Inner: '|| v_employee_name);
+    DBMS_OUTPUT.put_line('Outer: '|| v_employee_name);
+  END;  
+  DBMS_OUTPUT.put_line('Outer: Employee Name is '|| v_employee_name);
+END;
+/
+
+--04.01 the output of above example is
+--Inner: Employee Name: 'Rejwanul Reja'  and Designation: 'Sr. Software Engineer'
+--Outer: Employee Name: 'Rejwanul Reja'  and Designation: 'Sr. Software Engineer'
+--So how to we differentiate inner and outer variable when same name of varaible. Let's see
+begin <<outer_blk>>
+DECLARE
+  v_employee_name VARCHAR2(200) := 'Rejwanul Reja';
+  v_employee_Salary number(18,2) := 150000;
+BEGIN
+  DECLARE
+    v_employee_name VARCHAR2(200) := 'Employee Name: ''Rejwanul Reja''  and Designation: ''Sr. Software Engineer''';
+  BEGIN
+    DBMS_OUTPUT.put_line('Inner: '|| v_employee_name);
+    DBMS_OUTPUT.put_line('OUTER-INNER USE: Employee Name is '|| outer_blk.v_employee_name);
+    DBMS_OUTPUT.put_line('OUTER: Employee Salary is '|| v_employee_Salary);
+  END;  
+  DBMS_OUTPUT.put_line('Outer: Employee Name is '|| v_employee_name || ' and his salary is '|| v_employee_Salary);
+END;
+end outer_blk;
+/
+

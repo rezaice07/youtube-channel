@@ -1,0 +1,59 @@
+
+
+Record Composite Type
+---------------------
+
+Row Type
+---------
+DECLARE
+  r_emp employees%rowtype;
+BEGIN
+  SELECT * INTO r_emp FROM employees;
+END;
+/
+
+--ORA-01422: exact fetch returns more than requested number of rows
+--So how to we resolve this issue...
+--rowtype always store single object or single record....
+DECLARE
+  r_emp employees%rowtype;
+BEGIN
+  SELECT * INTO r_emp FROM employees where employee_id=100;
+  
+  DBMS_OUTPUT.put_line('Employee name '||r_emp.last_name|| '; Salary '|| r_emp.salary);
+END;
+/
+
+--Record Type
+
+SET serveroutput ON;
+/
+DECLARE
+type t_emp
+IS
+  record
+  (
+    employee_id NUMBER,
+    last_name   VARCHAR2(50),
+    salary      NUMBER(18,2) );
+  --initialize the record first
+  r_emp t_emp;
+BEGIN
+  SELECT employee_id,
+    last_name,
+    salary
+  INTO r_emp
+  FROM employees
+  WHERE employee_id=100;
+  DBMS_OUTPUT.put_line('Employee name '||r_emp.last_name|| '; Salary '|| r_emp.salary);
+END;
+/
+
+
+
+
+
+
+
+
+

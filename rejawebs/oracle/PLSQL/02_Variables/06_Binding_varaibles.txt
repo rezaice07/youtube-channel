@@ -1,0 +1,24 @@
+
+Binding variables
+------------------
+
+--For binding variable, we need to declare the varible first in worksheet
+variable Var_Emp_Name varchar2(150);
+
+--let's do it to use the variable to bind value
+declare 
+	V_Emp_Name varchar2(150);
+begin
+	:Var_Emp_Name :='Hello PL/SQL'; 
+	
+	V_Emp_Name := :Var_Emp_Name;
+	dbms_output.put_line(V_Emp_Name);
+	dbms_output.put_line(:Var_Emp_Name);
+
+end;
+/
+
+
+--we can also print the value outside the block scope and it not work outside of this current workseet..
+print Var_Emp_Name;
+/

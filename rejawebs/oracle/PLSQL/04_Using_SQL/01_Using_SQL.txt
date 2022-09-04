@@ -1,0 +1,106 @@
+
+
+Use of SQL In PL/SQL
+-------------------------
+There are some issues???
+------------------------
+	- you can not use ddl command directly
+
+
+How to use SQL in PL/SQL?
+-------------------------
+
+--Senerio - 01:
+SET serveroutput ON;
+/
+DECLARE
+  v_employee_name VARCHAR2(50);
+  v_employee_sal employees.salary%type;
+BEGIN
+  SELECT last_name,salary FROM employees WHERE employee_id=100;
+END;
+/
+--PLS-00428: an INTO clause is expected in this SELECT statement
+--How to we resolve this issue...
+DECLARE
+  v_employee_name VARCHAR2(50);
+  v_employee_sal employees.salary%type;
+BEGIN
+  SELECT last_name,
+    salary
+  INTO v_employee_name,
+    v_employee_sal
+  FROM employees
+  WHERE employee_id=100;
+  dbms_output.put_line('Employee Info:' || v_employee_name ||' and salary : '|| v_employee_sal);
+END;
+--result : Employee Info:King and salary : 24000
+/
+--Senerio 02: Multiple return result will show an error on into. let's see how to reproduce this issue...
+DECLARE
+  v_employee_name VARCHAR2(50);
+  v_employee_sal employees.salary%type;
+BEGIN
+  SELECT last_name,
+    salary
+  INTO v_employee_name,
+    v_employee_sal
+  FROM employees
+  WHERE job_id='IT_PROG';
+  dbms_output.put_line('Employee Info:' || v_employee_name ||' and salary : '|| v_employee_sal);
+END;
+/
+--ORA-01422: exact fetch returns more than requested number of rows
+
+--Need to remember:
+  --> must be same type
+  --> number of select items and into should be same
+  --> variable name and "Where clouse name should be same"
+  
+--Senerio 03:variable name and "Where" clause name should not be same
+
+DECLARE
+  v_employee_name VARCHAR2(50);
+  v_employee_sal employees.salary%type;
+  employee_Id number :=100;
+BEGIN
+  SELECT last_name,
+    salary
+  INTO v_employee_name,
+    v_employee_sal
+  FROM employees
+  WHERE employee_Id=employee_Id;
+  dbms_output.put_line('Employee Info:' || v_employee_name ||' and salary : '|| v_employee_sal);
+END;
+/
+
+--ORA-01422: exact fetch returns more than requested number of rows
+--due to employee_Id=employee_Id; bother are same
+--Let's resolve this above issue
+
+
+DECLARE
+  v_employee_name VARCHAR2(50);
+  v_employee_sal employees.salary%type;
+  v_employee_Id number :=100;
+BEGIN
+  SELECT last_name,
+    salary
+  INTO v_employee_name,
+    v_employee_sal
+  FROM employees
+  WHERE employee_Id=v_employee_Id;
+  dbms_output.put_line('Employee Info:' || v_employee_name ||' and salary : '|| v_employee_sal);
+END;
+/
+  
+--Employee Info:King and salary : 24000  
+
+
+
+
+
+
+
+
+	

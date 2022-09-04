@@ -1,0 +1,189 @@
+
+
+--Control structures
+If we need to run the specific block or not, even if we loop in bock and some other controling,
+In oracle the control structure are arised.
+
+Control Stuctures are ......
+
+IF Statement
+--------------
+
+DECLARE
+  v_employee_salary NUMBER(18,2);
+BEGIN
+  v_employee_salary  :=150000;
+  IF(v_employee_salary<150000) THEN
+    BEGIN
+      dbms_output.put_line('Your salar is less than 150000');
+    END;
+  elsif (v_employee_salary>=150000) THEN
+    BEGIN
+      dbms_output.put_line('Your salar is greater than or equal 150000');
+    END;
+  ELSE
+    BEGIN
+      dbms_output.put_line('Your salar is greater than or equal 150000');
+    END;
+  END IF;
+END;
+/
+
+Case Statement
+----------------
+DECLARE
+  v_employee_salary NUMBER(18,2);
+  v_emp_sal_Increment NUMBER(18,2);
+  
+BEGIN
+  v_employee_salary  :=150000;
+  
+  --Example 01: this case statement is only using for equal opetor
+  v_emp_sal_Increment := case v_employee_salary 
+                              when 150000 then v_employee_salary*0.4/100
+                              when 100000 then v_employee_salary*0.3/100
+                              when 50000 then v_employee_salary*0.2/100
+                              else v_employee_salary                              
+                          end;   
+                          
+  dbms_output.put_line('Case 01: Your salary is '|| (v_employee_salary+v_emp_sal_Increment));                          
+  
+  --Example 02: if we want to use conditional then we shuld follow the example below...
+  v_employee_salary  :=150000;
+  
+  v_emp_sal_Increment := case  
+                              when v_employee_salary>=150000 then v_employee_salary*0.4/100
+                              when v_employee_salary<150000 and v_employee_salary>50000 then v_employee_salary*0.3/100
+                              when v_employee_salary<=50000 then v_employee_salary*0.2/100
+                              else v_employee_salary                              
+                          end;   
+                          
+  dbms_output.put_line('Case 02: Your salary is '|| (v_employee_salary+v_emp_sal_Increment)); 
+END;
+/
+
+
+Loop
+---------
+
+Structure:
+
+Loop
+
+	Exit Conditions
+End Loop;
+
+
+--Example: basic use of loop
+DECLARE
+  v_Count NUMBER :=0;
+BEGIN
+  LOOP
+    v_Count :=v_Count+1;
+    dbms_output.put_line('Count is '|| v_Count);
+    EXIT;
+  END LOOP;
+END;
+/
+--exaple: if condition use
+DECLARE
+  v_Count NUMBER :=0;
+BEGIN
+  LOOP
+    v_Count :=v_Count+1;
+    dbms_output.put_line('Count is '|| v_Count);
+    IF (v_Count=10) THEN
+      EXIT;
+    END IF;
+  END LOOP;
+END;
+/
+--exaple: when condition use
+DECLARE
+  v_Count NUMBER :=0;
+BEGIN
+  LOOP
+    v_Count :=v_Count+1;
+    dbms_output.put_line('Count is '|| v_Count);
+    EXIT
+  WHEN v_Count=10;
+  END LOOP;
+END;
+/
+
+
+While Loops
+---------------
+
+--Structure:
+While condition loop
+
+
+
+end loop;
+
+note: No need to use of exit key;
+
+--Basic Example of while loop
+DECLARE
+  v_Count NUMBER :=0;
+BEGIN
+  while v_Count<10 LOOP
+    v_Count :=v_Count+1;
+    dbms_output.put_line('Count is '|| v_Count);
+     
+  END LOOP;
+END;
+/
+
+
+For Loops
+-------------
+
+--Structure:
+For counter in [Reverse] loop
+--body
+end loop;
+
+
+--example: Basic use
+DECLARE
+  v_Count NUMBER :=1;
+BEGIN
+  FOR i IN 1..10
+  LOOP
+    dbms_output.put_line('Count is '|| v_Count);
+    v_Count :=v_Count+1;
+  END LOOP;
+END;
+/
+
+--Example: basic use with intit value from variable
+DECLARE
+  v_Count NUMBER :=1;
+BEGIN
+  FOR i IN v_Count..10
+  LOOP
+    dbms_output.put_line('Count is '|| v_Count);
+    v_Count :=v_Count+1;
+  END LOOP;
+END;
+/
+
+
+--example: Basic use Reverse
+DECLARE
+  v_Count NUMBER :=1;
+BEGIN
+  FOR i IN reverse 1..10
+  LOOP
+    dbms_output.put_line('Count is '|| i);
+   
+  END LOOP;
+END;
+/
+
+
+
+
+

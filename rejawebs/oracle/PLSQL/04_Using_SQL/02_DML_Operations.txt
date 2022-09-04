@@ -1,0 +1,65 @@
+
+DML Operation in PL/SQL
+-----------------------
+We can do DML in PL/SQL like..
+	Insert,
+	Delete,
+	Update,
+	Marge
+
+Let's how to we do that...
+
+SET serveroutput ON;
+/
+--first we will create a new table
+CREATE TABLE Test_Ins_DML
+  (
+    id   NUMBER,
+    name VARCHAR2(50)
+  )
+  TABLESPACE Users;
+/
+--check data
+SELECT * FROM Test_Ins_DML;
+/
+--insert DML...
+DECLARE
+  v_totalCount NUMBER :=5000;
+BEGIN
+  FOR i IN 1..v_totalCount
+  LOOP
+    INSERT INTO Test_Ins_DML VALUES
+      (i,'Test Insert data...'||i
+      );
+  END LOOP;
+END;
+/
+--check data
+SELECT COUNT(*) FROM Test_Ins_DML;
+/
+--Update DML...
+DECLARE
+  v_totalCount NUMBER :=5000;
+BEGIN
+  FOR i IN 1..v_totalCount
+  LOOP
+    UPDATE Test_Ins_DML SET name = name||' Updated '||i WHERE id=i;
+  END LOOP;
+END;
+/
+--check data
+SELECT * FROM Test_Ins_DML ORDER BY id ASC;
+/
+--Delete DML...
+DECLARE
+  v_totalCount NUMBER :=5000;
+BEGIN
+  FOR i IN 1..v_totalCount
+  LOOP
+    DELETE FROM Test_Ins_DML WHERE id=i;
+  END LOOP;
+END;
+/
+--check data
+SELECT * FROM Test_Ins_DML ORDER BY id ASC;
+/
