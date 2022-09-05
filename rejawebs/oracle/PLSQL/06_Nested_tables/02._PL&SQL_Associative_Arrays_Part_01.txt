@@ -79,6 +79,114 @@ BEGIN
 END;
 /
 
+--Scenario 04: associated arrays use of
+--Use of record type
+--delete
+--last
+--next
+--prior
+--while loop
+--Let's see how do we do that...
+DECLARE
+type tr_emp
+IS
+  record
+  (
+    first_name EMPLOYEES.FIRST_NAME%type,
+    last_name EMPLOYEES.LAST_NAME%type,
+    email EMPLOYEES.EMAIL%type,
+    salary EMPLOYEES.SALARY%type );
+type taa_emp
+IS
+  TABLE OF tr_emp INDEX BY employees.email%type;
+  vr_emp taa_emp;
+  
+  indx number;
+BEGIN
+  --insert some data from employees
+  FOR i IN 100..110
+  LOOP
+    SELECT FIRST_NAME,LAST_NAME,EMAIL,SALARY into vr_emp(i) FROM employees WHERE employee_id = i;
+  END LOOP;
+  
+  --select some records from vr_emp
+ --vr_emp.delete(100);
+ --for range use, we can do it like below...
+ --vr_emp.delete(100,112);
+  --getting last index of vr_emp
+  indx :=vr_emp.first();  
+  
+  --if we use prior to order desc then we must set value index to last
+  --indx :=vr_emp.last();  
+  
+  dbms_output.put_line(indx);
+  
+  --while loop
+  while indx is not null  
+  loop
+    dbms_output.put_line(
+    'employee name: '|| vr_emp(indx).first_name || ' '|| vr_emp(indx).last_name ||
+    '; Email : '|| vr_emp(indx).email || 
+    '; Salary '|| vr_emp(indx).salary
+    );
+    
+    indx := vr_emp.next(indx);
+    --indx := vr_emp.prior(indx);
+  end loop;
+END;
+/
+
+
+--Scenario 05: associated arrays use of
+--use of table type 
+--insert data to a database table
+
+--Let's see how do we do that...
+--first we will create table from employees
+/
+
+create table employee_history as select *from employees where 1=2;
+
+/
+
+alter table employee_history add created_date date;
+
+/
+
+select *from employee_history;
+
+/
+DECLARE
+
+type t_emp_list
+IS
+  TABLE OF employee_history%rowtype INDEX BY pls_integer;
+  emp_list t_emp_list;
+  
+  idx number;
+BEGIN
+  --insert some data from employees
+  FOR i IN 100..110
+  LOOP
+    SELECT e.*,'01-Jun-22' into emp_list(i) FROM employees e WHERE e.employee_id = i;
+  END LOOP;
+ 
+  --getting first index of emp_list
+  idx :=emp_list.first();  
+  
+  --while loop
+  while idx is not null  
+  loop
+    emp_list(idx).salary := emp_list(idx).salary + emp_list(idx).salary*0.6;
+    
+    insert into employee_history values emp_list(idx); 
+    idx := emp_list.next(idx);
+  end loop;
+  
+  dbms_output.put_line('Insertion completed!');
+  
+END;
+/
 	
 
  

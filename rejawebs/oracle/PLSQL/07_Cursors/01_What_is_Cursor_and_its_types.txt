@@ -1,0 +1,214 @@
+Cursor:
+-----------
+A cursor is a pointer to the data. A cursor can store the data in PGA and it is session specific.
+Depending on use, there are types of cursors..
+
+01. Implicit Cursor:
+	a. Implicit cursors are automatically created when select statements are executed.
+	b. They are capable of fetching a single row at a time
+	c. Closes automatically after execution.
+	d. Provides less programmatic control to the users
+	e. Implicit Cursors are defined as: 
+	BEGIN
+		SELECT attr_name from table_name
+		where CONDITION;
+	END;
+	
+02. Explicit Cursor: 
+	a. Explicit cursors needs to be defined explicitly by the user by providing a name.
+	b. Explicit cursors can fetch multiple rows.
+	c. Need to close after execution.
+	d. User/Programmer has the entire control.
+	e. Implicit Cursors are defined as:
+	DECLARE
+	CURSOR cur_name IS
+		SELECT attr_name from table_name 
+		where CONDITION;
+	BEGIN
+		//IMPLEMENTATION
+	END;
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
