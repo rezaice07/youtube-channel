@@ -1,0 +1,87 @@
+
+Associative Arrays
+------------------
+=> known as index by tables
+=> Features
+	key can have string or number;
+	key does not need to be sequencial
+	Can have scalar and record types
+	More faster to access in efficient way because it store data in memory directly but traversing is slower.
+	
+Syntax:
+typ type_name as table of value_data_type [NOT_NULL]
+index by {PLS_INTEGER | BINARY_INTEGER | varchar2(size)}
+
+
+Scenario-01:Basic of associative array
+--------------------------------------
+
+DECLARE
+type t_emp
+IS
+  TABLE OF employees.last_name%type INDEX BY pls_integer;
+  ar_emp t_emp;
+BEGIN
+  FOR i IN 100..110
+  LOOP
+    SELECT last_name INTO ar_emp(i) FROM employees WHERE employee_id=i;
+  END LOOP;
+  FOR k IN ar_emp.first()..ar_emp.last()
+  LOOP
+    IF ar_emp.exists(k) THEN
+      DBMS_OUTPUT.PUT_LINE(ar_emp(k));
+    END IF;
+  END LOOP;
+END;
+/
+--Scenario: 02: assigning value to associative array from local variable value;
+DECLARE
+type t_emp
+IS
+  TABLE OF employees.last_name%type INDEX BY pls_integer;
+  ar_emp t_emp;
+  v_emp_last_name employees.last_name%type;
+BEGIN
+  FOR i IN 100..110
+  LOOP
+    SELECT last_name INTO v_emp_last_name FROM employees WHERE employee_id=i;
+    ar_emp(i) := v_emp_last_name || ' Touched';
+  END LOOP;
+  FOR k IN ar_emp.first()..ar_emp.last()
+  LOOP
+    IF ar_emp.exists(k) THEN
+      DBMS_OUTPUT.PUT_LINE(ar_emp(k));
+    END IF;
+  END LOOP;
+END;
+/
+--Scenario 03: assigning value to associative array from local variable value if table exists;
+DECLARE
+type t_emp
+IS
+  TABLE OF employees.last_name%type INDEX BY pls_integer;
+  ar_emp t_emp;
+  v_emp_last_name employees.last_name%type;
+BEGIN
+  FOR i IN 100..110
+  LOOP
+    SELECT last_name INTO v_emp_last_name FROM employees WHERE employee_id=i and department_id=60;
+    IF v_emp_last_name IS NOT NULL THEN
+      ar_emp(i)        := v_emp_last_name || ' Touched';
+    END IF;
+  END LOOP;
+  FOR k IN ar_emp.first()..ar_emp.last()
+  LOOP
+    IF ar_emp.exists(k) THEN
+      DBMS_OUTPUT.PUT_LINE(ar_emp(k));
+    END IF;
+  END LOOP;
+END;
+/
+
+	
+
+ 
+
+
+
