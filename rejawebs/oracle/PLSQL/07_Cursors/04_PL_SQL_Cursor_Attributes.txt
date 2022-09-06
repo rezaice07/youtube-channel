@@ -1,0 +1,32 @@
+--Scenario 01: how to use atributes
+--%rowtype
+--%isopen
+--%notfound
+--%rowcount: starting from 1 value and initialize after executing the fetch 
+DECLARE
+  CURSOR c_emp_list
+  IS
+    SELECT * FROM employees;
+  v_emp c_emp_list%rowtype;
+  v_row_count number;
+  
+BEGIN
+  IF NOT c_emp_list%isopen THEN
+    OPEN c_emp_list;
+    dbms_output.put_line('Cursor is now open');
+    v_row_count := c_emp_list%rowcount;
+  END IF;
+  
+  dbms_output.put_line(v_row_count);
+  FETCH c_emp_list INTO v_emp;
+  v_row_count := c_emp_list%rowcount;
+  dbms_output.put_line(v_row_count);
+  
+  WHILE c_emp_list%found and c_emp_list%rowcount<6
+  LOOP
+    dbms_output.put_line(v_emp.last_name);
+    FETCH c_emp_list INTO v_emp;
+  END LOOP;
+  CLOSE c_emp_list;
+END;
+/

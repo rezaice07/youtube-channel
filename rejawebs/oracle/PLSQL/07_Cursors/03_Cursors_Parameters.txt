@@ -1,0 +1,48 @@
+
+Cursor with parameters
+--------------------------
+
+--Scenario 01: Cursor with parameters
+DECLARE
+  CURSOR c_emp_list(p_department_id number)
+  IS
+    SELECT * FROM employees WHERE department_id = p_department_id;
+  v_emp c_emp_list%rowtype;
+BEGIN
+  OPEN c_emp_list(90);
+  FETCH c_emp_list INTO v_emp;
+  WHILE c_emp_list%found LOOP dbms_output.put_line('Employee Name: '
+    || v_emp.last_name
+    || ' Salary '
+    || v_emp.salary);
+  FETCH c_emp_list INTO v_emp;
+  END LOOP;
+  close c_emp_list;
+END;
+/
+
+
+--Scenario 0: Cursor with different parameter
+DECLARE
+  CURSOR c_emp_list(p_department_id number)
+  IS
+    SELECT * FROM employees WHERE department_id = p_department_id;
+  v_emp c_emp_list%rowtype;
+BEGIN
+  OPEN c_emp_list(:p_department_id);
+  FETCH c_emp_list INTO v_emp;
+  WHILE c_emp_list%found LOOP dbms_output.put_line('Employee Name: '
+    || v_emp.last_name
+    || ' Salary '
+    || v_emp.salary);
+  FETCH c_emp_list INTO v_emp;
+  END LOOP;
+  close c_emp_list;
+END;
+/
+
+
+
+
+
+
