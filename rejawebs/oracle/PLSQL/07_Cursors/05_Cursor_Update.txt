@@ -1,0 +1,138 @@
+
+
+Update Cursor
+----------------------
+	=>When you update a row, it is locked to the others
+	=>For Update clause locks the selected row
+	=>nowait option will terminate execution if there is a lock
+	=>Default option is wait
+	=>For Update of clause locks only the selected tables
+
+Syntax:
+
+curso cursor_name (parameter_name datatype....)
+is select statement
+for update [of cloumns(s)] [nowait | wait n]
+
+--Note: n is the seconds to wait time
+
+
+Scenario 01: We will create a user and table privileges before generating the scenarios...
+
+create user test_user 
+identified by 123;
+
+/
+
+grant 
+  create session,
+  select any table,
+  resource
+to test_user;
+
+/
+
+grant update on hr.employees to test_user;
+/
+grant update on hr.departments to test_user;
+/
+
+
+--set serveroutput on;
+--Basic use of cursor for update
+--It always wait or lock until the table row committed on update operatoin.
+
+DECLARE
+  CURSOR c_employee
+  IS
+    SELECT employee_id,
+      first_name,
+      last_name,
+      department_name
+    FROM employees
+    JOIN departments USING (department_id)
+    WHERE employee_id IN (100,101,102);
+BEGIN
+  FOR item IN c_employee
+  LOOP
+    UPDATE employees
+    SET phone_number  ='01718055626'
+    WHERE employee_id = item.employee_id;
+  END LOOP;
+END;
+/
+
+UPDATE hr.employees
+SET phone_number  ='01718055626'
+WHERE employee_id = 100;
+
+
+Scenario 02: 
+--nowait
+DECLARE
+  CURSOR c_employee
+  IS
+    SELECT employee_id,
+      first_name,
+      last_name,
+      department_name
+    FROM employees
+    JOIN departments USING (department_id)
+    WHERE employee_id IN (100,101,102)
+    for update of 
+    employees.phone_number,
+    departments.department_name nowait;
+BEGIN
+  --  FOR item IN c_employee
+  --  LOOP
+  --    UPDATE employees
+  --    SET phone_number  ='01718055626'
+  --    WHERE employee_id = item.employee_id;
+  --  END LOOP;
+  OPEN c_employee;
+END;
+/
+
+UPDATE hr.employees
+SET phone_number  ='01718055626'
+WHERE employee_id = 100;
+
+--errors...
+00054. 00000 -  "resource busy and acquire with NOWAIT specified or timeout expired"
+*Cause:    Interested resource is busy.
+*Action:   Retry if necessary or increase timeout.
+
+
+Scenario 02: 
+--wait 
+--wait for 5 second then will return error
+DECLARE
+  CURSOR c_employee
+  IS
+    SELECT employee_id,
+      first_name,
+      last_name,
+      department_name
+    FROM employees
+    JOIN departments USING (department_id)
+    WHERE employee_id IN (100,101,102)
+    for update of 
+    employees.phone_number,
+    departments.department_name wait 5;
+BEGIN
+  --  FOR item IN c_employee
+  --  LOOP
+  --    UPDATE employees
+  --    SET phone_number  ='01718055626'
+  --    WHERE employee_id = item.employee_id;
+  --  END LOOP;
+  OPEN c_employee;
+END;
+/
+UPDATE hr.employees
+SET phone_number  ='01718055626'
+WHERE employee_id = 100;
+    
+30006. 00000 -  "resource busy; acquire with WAIT timeout expired"
+*Cause:    The requested resource is busy.
+*Action:   Retry the operation later.
