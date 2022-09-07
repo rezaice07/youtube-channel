@@ -1,0 +1,128 @@
+
+Exceptions
+------------------
+What is Exceptions: is a runtime error
+
+--Let's create an anonymous block
+DECLARE
+  v_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id =100;
+  dbms_output.put_line(v_name);
+END;
+/
+--Let's create an anonymous block that will not return any value
+DECLARE
+  v_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id =10;
+  dbms_output.put_line(v_name);
+END;
+--Errors:
+/*
+01403. 00000 -  "no data found"
+*Cause:    No data was found from the objects.
+*Action:   There was no data from the objects which may be due to end of fetch.
+*/
+/
+--Handling the exception when "no_data_found"
+DECLARE
+  v_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id = 10;
+  dbms_output.put_line('Hello');
+EXCEPTION
+WHEN no_data_found THEN
+  dbms_output.put_line('There is no employee with the selected id');
+END;
+/
+--Handling multiple exceptions like "too_many_rows" and "no_data_found"
+DECLARE
+  v_name            VARCHAR2(6);
+  v_department_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id = 100;
+  --multiple row found
+  SELECT department_id
+  INTO v_department_name
+  FROM employees
+  WHERE first_name = v_name;
+  dbms_output.put_line('Hello '|| v_name || '. Your department id is : '|| v_department_name );
+EXCEPTION
+WHEN no_data_found THEN
+  dbms_output.put_line('There is no employee with the selected id');
+WHEN too_many_rows THEN
+  dbms_output.put_line('There are more than one employees with the name '|| v_name);
+  dbms_output.put_line('Try with a different employee');
+END;
+/
+-- when others then example, from this example of thers error we will reproduce this one by using v_name limited size.
+DECLARE
+  v_name            VARCHAR2(6);
+  v_department_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id = 103;
+  SELECT department_id
+  INTO v_department_name
+  FROM employees
+  WHERE first_name = v_name;
+  dbms_output.put_line('Hello '|| v_name || '. Your department id is : '|| v_department_name );
+EXCEPTION
+WHEN no_data_found THEN
+  dbms_output.put_line('There is no employee with the selected id');
+WHEN too_many_rows THEN
+  dbms_output.put_line('There are more than one employees with the name '|| v_name);
+  dbms_output.put_line('Try with a different employee');
+WHEN OTHERS THEN
+  dbms_output.put_line('An unexpected error happened. Connect with the programmer..');
+END;
+/
+--sqlerrm & sqlcode example
+DECLARE
+  v_name            VARCHAR2(6);
+  v_department_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id = 103;
+  SELECT department_id
+  INTO v_department_name
+  FROM employees
+  WHERE first_name = v_name;
+  dbms_output.put_line('Hello '|| v_name || '. Your department id is : '|| v_department_name );
+EXCEPTION
+WHEN no_data_found THEN
+  dbms_output.put_line('There is no employee with the selected id');
+WHEN too_many_rows THEN
+  dbms_output.put_line('There are more than one employees with the name '|| v_name);
+  dbms_output.put_line('Try with a different employee');
+WHEN OTHERS THEN
+  dbms_output.put_line('An unexpected error happened. Connect with the programmer..');
+  dbms_output.put_line(SQLCODE || ' ---> '|| sqlerrm);
+END;
+/
+--Inner block exception example
+DECLARE
+  v_name            VARCHAR2(6);
+  v_department_name VARCHAR2(100);
+BEGIN
+  SELECT first_name INTO v_name FROM employees WHERE employee_id = 100;
+  BEGIN
+    SELECT department_id
+    INTO v_department_name
+    FROM employees
+    WHERE first_name = v_name;
+  EXCEPTION
+  WHEN too_many_rows THEN
+    v_department_name := 'Error in department_name';
+  END;
+  dbms_output.put_line('Hello '|| v_name || '. Your department id is : '|| v_department_name );
+EXCEPTION
+WHEN no_data_found THEN
+  dbms_output.put_line('There is no employee with the selected id');
+WHEN too_many_rows THEN
+  dbms_output.put_line('There are more than one employees with the name '|| v_name);
+  dbms_output.put_line('Try with a different employee');
+WHEN OTHERS THEN
+  dbms_output.put_line('An unexpected error happened. Connect with the programmer..');
+  dbms_output.put_line(SQLCODE || ' ---> '|| sqlerrm);
+END;
+

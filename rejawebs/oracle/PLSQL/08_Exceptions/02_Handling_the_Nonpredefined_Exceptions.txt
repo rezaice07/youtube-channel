@@ -1,0 +1,23 @@
+-----------------HANDLING a nonpredefined exception
+--let's reproduce the error and it is error no is 01407
+BEGIN
+  UPDATE employees SET email = NULL WHERE employee_id = 100;
+END;
+/*
+Error report -
+ORA-01407: cannot update ("HR"."EMPLOYEES"."EMAIL") to NULL
+ORA-06512: at line 2
+01407. 00000 -  "cannot update (%s) to NULL"
+*/
+/
+--Let's defined the error name by using the pragma
+DECLARE
+  cannot_update_to_null_custom EXCEPTION;
+  pragma exception_init(cannot_update_to_null_custom,-01407);
+BEGIN
+  UPDATE employees SET email = NULL WHERE employee_id = 100;
+EXCEPTION
+WHEN cannot_update_to_null_custom THEN
+  dbms_output.put_line('You cannot update with a null value!');
+END;
+/
