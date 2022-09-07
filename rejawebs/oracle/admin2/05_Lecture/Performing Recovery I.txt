@@ -1,0 +1,236 @@
+
+Restoring in NOARCHIVELOG Mode:11 - 4
+------------------------------------
+If the database is in NOARCHIVELOG mode and if any data file
+is lost, perform the following tasks:
+	1. Shut down the instance if it is not already down.
+	2. Restore the entire database, including all data and control files, from the backup.
+	3. Open the database with resetlogs.
+	4. Inform users that they must re-enter all changes that were made since the last backup.
+
+--Check archive logs status
+SQL> archive log list;
+Database log mode              Archive Mode
+Automatic archival             Enabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     8
+Next log sequence to archive   10
+Current log sequence           10
+
+--let's shutdown,mount the database and then change noarchivelog mode...
+SQL> shutdown immediate;
+
+SQL> startup mount;
+
+
+SQL> Alter database noarchivelog;
+
+--now check the status of archive log
+SQL> archive log list;
+Database log mode              No Archive Mode
+Automatic archival             Disabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     8
+Current log sequence           10
+
+--now we will create a table to insert a data before backup the database
+
+SQL> alter database open;
+Database altered.
+
+SQL> create table test_reoc (id number, name varchar2(50)) tablespace users;
+
+SQL> insert into test_reoc values(1,'before backup data....');
+
+SQL> commit;
+
+--Now we will get backup the database...
+
+RMAN> backup database;
+
+Note: Backup not posssible if noarchivelog mode on database open.
+
+--let's go back to mount stage
+
+SQL> shutdown immediate;
+
+SQL> startup mount; 
+
+RMAN> backup database;
+
+--Now we will insert another value and switch logfile after backup the database..
+
+SQL> alter database open;
+
+SQL> select *from test_reoc;
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> /
+
+System altered.
+
+SQL> /
+
+System altered.
+
+SQL> insert into test_reoc values(2,'After backup data....');
+
+SQL> commit;
+
+SQL> select *from test_reoc;
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> /
+
+System altered.
+
+SQL> /
+
+--Let's check the datafile...
+
+SQL> select name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1107575803
++DATA/DBA167/DATAFILE/resumetab01.dbf
++DATA/DBA167/DATAFILE/sysaux.258.1107575839
++DATA/DBA167/DATAFILE/undotbs1.259.1107575853
++DATA/DBA167/DATAFILE/dba167tab1
++DATA/DBA167/DATAFILE/users.260.1107575855
++DATA/DBA167/DATAFILE/audittab.269.1110732263
++DATA/DBA167/DATAFILE/rmantab.271.1113838853
+/u01/app/oracle/oradata/test_corp_tab01.dbf
+/u01/app/oracle/oradata/undotab201.dbf
+
+--let's destroy all the data files from /u01/app/oracle/oradata/
+--so first we need to shutdown the database...
+
+SQL> shutdown immediate;
+
+[oracle@dba167 ~]$ cd /u01/app/oracle/oradata/
+[oracle@dba167 oradata]$ ll
+total 70096
+-rw-r-----. 1 oracle asmadmin 10493952 Sep  8 04:58 test_corp_tab01.dbf
+-rw-r-----. 1 oracle asmadmin 61284352 Sep  8 04:58 undotab201.dbf
+
+
+-- delete all file from cd /u01/app/oracle/oradata/
+[oracle@dba167 oradata]$ rm -rf *
+[oracle@dba167 oradata]$ ll
+total 0
+
+--or you can by using below...
+
+[oracle@dba167 oradata]$ rm -rf te*
+[oracle@dba167 oradata]$ rm -rf undotab201.dbf
+
+--now try to startup the database...
+SQL> startup;
+
+ORACLE instance started.
+
+Total System Global Area 4294963272 bytes
+Fixed Size                  8904776 bytes
+Variable Size            2466250752 bytes
+Database Buffers         1811939328 bytes
+Redo Buffers                7868416 bytes
+Database mounted.
+ORA-01157: cannot identify/lock data file 10 - see DBWR trace file
+ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+
+--Error occurred
+
+RMAN> restore database;
+
+Starting restore at 08-SEP-22
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=26 device type=DISK
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of restore command at 09/08/2022 05:02:09
+RMAN-06026: some targets not found - aborting restore
+RMAN-06023: no backup or copy of datafile 1 found to restore
+
+
+--and alos tyr open the database...
+
+SQL> alter database open;
+alter database open
+*
+ERROR at line 1:
+ORA-01157: cannot identify/lock data file 10 - see DBWR trace file
+ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+
+
+--need to restore control file in nomount stage and then restore the databse with resetlogs 
+
+SQL> shutdown immediate;
+
+SQL> startup nomount;
+
+--restore control file from autobackup
+RMAN> restore controlfile from autobackup;
+
+RMAN> select status from v$instance;
+
+STATUS
+------------
+STARTED
+
+
+RMAN> alter database mount;
+
+RMAN> restore database;
+
+RMAN> alter database open resetlogs;
+
+
+SQL> select *From test_reoc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

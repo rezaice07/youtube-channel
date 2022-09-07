@@ -1,0 +1,238 @@
+
+Using Transparent-Mode Encryption
+-------------------------------------
+
+--change directory to 
+	[oracle@dba167 admin]$ cd /u01/app/oracle/product/19.3.0/db_1/network/admin
+
+--create a file with the name of sqlnet.ora using vi mode...
+[oracle@dba167 admin]$ vi sqlnet.ora
+
+--Now save the above file with below contents
+
+ENCRYPTION_WALLET_LOCATION =
+(SOURCE =
+(METHOD = FILE)
+(METHOD_DATA =
+(DIRECTORY =/u01/app/oracle/admin/dba167/wallet)))
+
+--Now check list of files....
+	[oracle@dba167 admin]$ ll
+	total 12
+	drwxr-xr-x. 2 oracle oinstall   64 Apr 17  2019 samples
+	-rw-r--r--. 1 oracle oinstall 1536 Feb 14  2018 shrept.lst
+	-rw-r--r--. 1 oracle oinstall  118 Aug 29 01:13 sqlnet.ora
+	-rw-r-----. 1 oracle oinstall  404 Jun 17 04:01 tnsnames.ora
+
+--Now we need to create a wallet directory as like DIRECTORY =/u01/app/oracle/admin/dba167/wallet
+[oracle@dba167 admin]$ mkdir /u01/app/oracle/admin/dba167/wallet
+
+--As you can see, first we need to connect with sys or syskm user
+	[oracle@dba167 ~]$ sqlplus / AS SYSKM
+
+	or
+
+	SQL> CONNECT / AS SYSKM
+
+--let's create keystore
+
+	SQL> ADMINISTER KEY MANAGEMENT CREATE KEYSTORE '/u01/app/oracle/admin/dba167/wallet' IDENTIFIED BY Oracle_32145;
+
+	keystore altered.
+
+--as you can see one key store is created  with the name of ewallet.p12 in the following location....
+	[oracle@dba167 wallet]$ cd /u01/app/oracle/admin/dba167/wallet
+	[oracle@dba167 wallet]$ ll
+	total 4
+	-rw-------. 1 oracle asmadmin 2555 Aug 29 02:32 ewallet.p12
+
+--If we execute the script below and will not return any results
+	SQL> select * from v$encryption_wallet;
+	
+--After creating a keystore wallet, need to open with wallet password
+	SQL> ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY "Oracle_32145";
+
+--If we execute the script below and will have result
+	SQL> select * from v$encryption_wallet;
+	WRL_TYPE	WRL_PARAMETER	                    STATUS				WALLET_TYPE	WALLET_ORDER	KEYSTORE_MODE	FULLY_BACKED_UP	CON_ID
+	--------------------------------------------------------------------------------------------------------------------------------------------
+	FILE	    /u01/app/oracle/admin/dba167/wallet	OPEN_NO_MASTER_KEY	PASSWORD	SINGLE			NONE			UNDEFINED		0
+
+
+--let's create master key by using below command..
+	SQL> ADMINISTER KEY MANAGEMENT SET KEY IDENTIFIED BY Oracle_32145 WITH BACKUP USING 'master';
+
+	keystore altered.
+
+--If we execute the script below and will have result
+	SQL> select * from v$encryption_wallet;
+	WRL_TYPE	WRL_PARAMETER	                    STATUS				WALLET_TYPE	WALLET_ORDER	KEYSTORE_MODE	FULLY_BACKED_UP	CON_ID
+	--------------------------------------------------------------------------------------------------------------------------------------------
+	FILE	    /u01/app/oracle/admin/dba167/wallet	OPEN				PASSWORD	SINGLE			NONE			UNDEFINED		0
+
+	notice that status is OPEN
+
+--also can see master key...with the name of "ewallet_2022082821110104_master.p12"
+	[oracle@dba167 wallet]$ ll
+	total 8
+	-rw-------. 1 oracle asmadmin 2555 Aug 29 03:11 ewallet_2022082821110104_master.p12
+		
+
+--Now we will backup keystore containing current master key;
+	SQL> administer key management backup keystore identified by "Oracle_32145";
+
+	keystore altered.
+
+--So the backup is 
+	[oracle@dba167 wallet]$ ll	
+	-rw-------. 1 oracle asmadmin 3995 Aug 29 03:19 ewallet_2022082821195302.p12
+
+--if you want to close keystore
+	SQL> administer key management set keystore CLOSE;
+	
+	Now we don't want to close 
+
+--Now we will shutdown the database and restart	
+	SQL>  shutdown immediate;	
+	SQL> startup
+	
+--If we execute the script below and will have result
+	SQL> select * from v$encryption_wallet;
+	WRL_TYPE	WRL_PARAMETER	                    STATUS				WALLET_TYPE	WALLET_ORDER	KEYSTORE_MODE	FULLY_BACKED_UP	CON_ID
+	--------------------------------------------------------------------------------------------------------------------------------------------
+	FILE	    /u01/app/oracle/admin/dba167/wallet	CLOSE	PASSWORD	SINGLE			NONE			UNDEFINED		0
+
+	notice that status is CLOSE
+
+--Let's create table with encrypt
+SQL>
+create table hr.test_encrypt
+(
+	Id number(4),
+	name varchar2(30),
+	salary number(10,2)
+);
+
+--will return error like - 28365. 0000 -  "wallet is not open"
+
+--Now open with wallet password
+	SQL> ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY "Oracle_32145";
+	
+--Let's create table with encrypt
+	SQL>
+	create table hr.test_encrypt
+	(
+		Id number(4),
+		name varchar2(30),
+		salary number(10,2)
+	);
+
+--insert some data 
+	SQL> insert into hr.test_encrypt values(1,'Roha',100000);
+
+	1 row created.
+
+	SQL> commit;
+
+	Commit complete.
+
+	--results....
+	SQL> select *from hr.test_encrypt;
+
+			ID NAME                               SALARY
+	---------- ------------------------------ ----------
+			 1 Roha                               100000
+
+--if we restart now and it will automatically close the wallet
+	SQL> startup force
+	ORACLE instance started.
+
+--and will return an error while quering..
+	SQL> select *from hr.test_encrypt;
+	select *from hr.test_encrypt
+					*
+	ERROR at line 1:
+	ORA-28365: wallet is not open
+	
+--But will work if we have items in select like id and name except salary column
+
+SQL> select id,name from hr.test_encrypt;
+
+        ID NAME
+---------- ------------------------------
+         1 Roha
+
+--if we configure to auto login and it will not even to open after database restart time
+	SQL> administer key management create auto_login keystore from keystore '/u01/app/oracle/admin/dba167/wallet' identified by "Oracle_32145";
+
+
+Configuring RMAN Encryption
+----------------------------------
+
+--we can see value CONFIGURE ENCRYPTION FOR DATABASE OFF
+	RMAN> show all;
+
+	CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+
+--let's change it to ON..
+	RMAN> CONFIGURE ENCRYPTION FOR DATABASE ON;
+
+
+Using Password-Mode Encryption
+-------------------------------
+	RMAN> SET ENCRYPTION ON IDENTIFIED BY Oracle123 ONLY;
+
+	executing command: SET encryption
+
+--now backup tablespace users..	
+	RMAN> backup tablespace users;
+
+	Starting backup at 29-AUG-22
+	allocated channel: ORA_DISK_1
+	channel ORA_DISK_1: SID=280 device type=DISK
+	channel ORA_DISK_1: starting full datafile backup set
+	channel ORA_DISK_1: specifying datafile(s) in backup set
+	input datafile file number=00007 name=+DATA/DBA167/DATAFILE/users.260.1107575855
+	channel ORA_DISK_1: starting piece 1 at 29-AUG-22
+	channel ORA_DISK_1: finished piece 1 at 29-AUG-22
+	piece handle=+FRA/DBA167/BACKUPSET/2022_08_29/nnndf0_tag20220829t043444_0.331.1113971685 tag=TAG20220829T043444 comment=NONE
+	channel ORA_DISK_1: backup set complete, elapsed time: 00:00:03
+	Finished backup at 29-AUG-22
+
+	Starting Control File and SPFILE Autobackup at 29-AUG-22
+	piece handle=+FRA/DBA167/AUTOBACKUP/2022_08_29/s_1113971688.332.1113971689 comment=NONE
+	Finished Control File and SPFILE Autobackup at 29-AUG-22
+
+--Now reconnect rman user and offline the users tablespace and try restore tablespace users
+	[oracle@dba167 ~]$ rman target /
+
+	RMAN> sql 'alter tablespace users offline';
+
+	RMAN> restore tablespace users;
+
+	ORA-19913: unable to decrypt backup
+
+--To resolve this error above run below command
+	RMAN> set decryption identified by Oracle123;
+
+	executing command: SET decryption
+	
+--Restore completed using below command...
+	RMAN> restore tablespace users;
+
+	RMAN> recover tablespace users;
+
+	RMAN> sql 'alter tablespace users online';
+
+
+
+
+
+
+
+
+
+
+
+
+
