@@ -110,7 +110,7 @@ create table hr.test_encrypt
 (
 	Id number(4),
 	name varchar2(30),
-	salary number(10,2)
+	salary number(10,2) encrypt
 );
 
 --will return error like - 28365. 0000 -  "wallet is not open"
@@ -124,7 +124,7 @@ create table hr.test_encrypt
 	(
 		Id number(4),
 		name varchar2(30),
-		salary number(10,2)
+		salary number(10,2) encrypt
 	);
 
 --insert some data 

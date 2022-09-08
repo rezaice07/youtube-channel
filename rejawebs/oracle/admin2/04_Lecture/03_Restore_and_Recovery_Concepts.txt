@@ -139,7 +139,7 @@ Using RMAN RESTORE and RECOVER Commands
 
 -- The error "ORA-01110: data file 10: " arised.
 
---Now we gonna to offile the datafile with number 10(this is the datafile no)
+--Now we gonna offile the datafile with number 10(this is the datafile no)
 	SQL> alter database datafile 10 offline;
 
 	Database altered.
