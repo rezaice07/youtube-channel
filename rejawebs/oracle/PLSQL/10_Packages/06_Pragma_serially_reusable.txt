@@ -1,0 +1,50 @@
+
+
+
+--pragma serially_reusable help to give defult value result until we set the value of the variable. 
+
+--package spec
+create or replace package pragma_serially_resulable_pkg is
+                              pragma serially_reusable;
+                              
+v_company_name varchar2(100) :='Oracle';
+
+end pragma_serially_resulable_pkg;
+
+/
+--individually..
+execute DBMS_OUTPUT.PUT_LINE(pragma_serially_resulable_pkg.v_company_name);
+
+/
+begin
+pragma_serially_resulable_pkg.v_company_name :='ACME';
+DBMS_OUTPUT.PUT_LINE(pragma_serially_resulable_pkg.v_company_name);
+end;
+
+/
+--individually..
+execute DBMS_OUTPUT.PUT_LINE(pragma_serially_resulable_pkg.v_company_name);
+
+/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

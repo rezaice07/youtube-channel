@@ -1,0 +1,55 @@
+Package Initialization
+-------------------------------
+
+--constant_pkg spec
+create or replace package constant_pkg 
+as 
+v_emp_increase_salary number :=1000;
+
+end constant_pkg;
+
+
+--accessing to package
+--overriding variable value and it is session specific
+
+begin
+DBMS_OUTPUT.PUT_LINE('Before overriding the variable value');
+
+DBMS_OUTPUT.PUT_LINE(constant_pkg.v_emp_increase_salary);
+
+DBMS_OUTPUT.PUT_LINE('After overriding the variable value');
+
+constant_pkg.v_emp_increase_salary :=5000;
+DBMS_OUTPUT.PUT_LINE(constant_pkg.v_emp_increase_salary);
+end;
+/
+
+--output
+/*
+Before overriding the variable value
+1000
+After overriding the variable value
+5000
+*/
+
+
+
+--let's grant execute privilege to test_user
+grant execute on constant_pkg to test_user;
+/
+revoke execute on constant_pkg to test_user;
+/
+
+--how do they use this package
+begin
+DBMS_OUTPUT.PUT_LINE('Before overriding the variable value');
+
+DBMS_OUTPUT.PUT_LINE(hr.constant_pkg.v_emp_increase_salary);
+
+DBMS_OUTPUT.PUT_LINE('After overriding the variable value');
+
+hr.constant_pkg.v_emp_increase_salary :=5000;
+DBMS_OUTPUT.PUT_LINE(hr.constant_pkg.v_emp_increase_salary);
+end;
+/
+

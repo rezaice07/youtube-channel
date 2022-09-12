@@ -1,0 +1,51 @@
+
+Illegal Object Reference & Forward Declaration
+------------------------------------------------
+Remember, we can't call a function or procedure before creating it's sub program...
+let's see how do we do that...
+--in function get_avg_sal where Invalid_fn is the invalid, this is because of order of function or procedure creation.
+--we must always declare or implement the function or procedure then we can use it to other function or procedure. 
+
+create or replace PACKAGE BODY EMPLOYEE_PKG
+AS
+  --we must declare variable after as kewword
+  v_sal_inc  NUMBER :=1000;
+  v_sal_inc2 NUMBER :=1000;
+  PROCEDURE print_test
+  IS
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test: '|| v_sal_inc);
+  END;
+  PROCEDURE increase_salaries
+  AS
+  BEGIN
+    FOR item IN cur_emps
+    LOOP
+      UPDATE employees SET salary = salary+(salary*v_salary_increase_rate/100);
+    END LOOP;
+  END increase_salaries;
+  FUNCTION get_avg_sal(
+      p_dept_id NUMBER)
+    RETURN NUMBER
+  AS
+    v_avg_sal NUMBER;
+  BEGIN
+    SELECT AVG(salary)
+    INTO v_avg_sal
+    FROM employees
+    WHERE DEPARTMENT_ID=p_dept_id;
+    --invalid declaration
+    --dbms_output.put_line(Invalid_fn());
+    RETURN v_avg_sal;
+  END get_avg_sal;
+  FUNCTION Invalid_fn
+    RETURN VARCHAR2
+  AS
+    v_inv_text VARCHAR2(50);
+  BEGIN
+    v_inv_text :='this is invalid fn';
+    RETURN v_inv_text;
+  END Invalid_fn;
+END EMPLOYEE_PKG;
+
+ 

@@ -1,0 +1,127 @@
+
+Visibility of Package Objects
+-----------------------------------
+--spec
+
+CREATE OR REPLACE PACKAGE EMPLOYEE_PKG
+AS
+  v_salary_increase_rate NUMBER :=0.15;
+  CURSOR cur_emps
+  IS
+    SELECT *FROM employees;
+  PROCEDURE print_test;
+  PROCEDURE increase_salaries;
+  FUNCTION get_avg_sal(
+      p_dept_id NUMBER)
+    RETURN NUMBER;
+END EMPLOYEE_PKG;
+
+--body
+
+create or replace PACKAGE BODY EMPLOYEE_PKG
+AS
+ --we must declare variable after as kewword 
+  v_sal_inc number :=1000;
+  v_sal_inc2 number :=1000;
+  
+  PROCEDURE print_test
+  IS
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('Test: '|| v_sal_inc);
+  END;
+  PROCEDURE increase_salaries
+  AS
+  BEGIN
+    FOR item IN cur_emps
+    LOOP
+      UPDATE employees SET salary = salary+(salary*v_salary_increase_rate/100);
+    END LOOP;
+  END increase_salaries;
+    
+  FUNCTION get_avg_sal(
+      p_dept_id NUMBER)
+    RETURN NUMBER
+  AS
+    v_avg_sal NUMBER;
+  BEGIN
+    SELECT AVG(salary)
+    INTO v_avg_sal
+    FROM employees
+    WHERE DEPARTMENT_ID=p_dept_id;
+    RETURN v_avg_sal;
+  END get_avg_sal;
+END EMPLOYEE_PKG;
+
+--calling
+     
+BEGIN
+  EMPLOYEE_PKG.print_test  ;  
+END;
+
+--we can also access to the variables but we can't access to private variables
+/
+begin
+--package spec variale or public variable
+DBMS_OUTPUT.PUT_LINE(EMPLOYEE_PKG.v_salary_increase_rate);
+
+--local or private variable
+--DBMS_OUTPUT.PUT_LINE(EMPLOYEE_PKG.v_sal_inc2);
+end;
+/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

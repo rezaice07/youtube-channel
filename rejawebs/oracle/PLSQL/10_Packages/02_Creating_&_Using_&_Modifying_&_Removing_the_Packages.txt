@@ -1,0 +1,54 @@
+
+Creating and Using Packages
+-----------------------------
+
+--Before creating a package, need to remember is that...
+--one is package spec and another one is package body
+
+--let's create package spec
+create or replace PACKAGE EMPLOYEE_PKG
+AS
+  v_salary_increase_rate NUMBER :=0.15;
+  CURSOR cur_emps
+  IS
+    SELECT *FROM employees;
+  PROCEDURE increase_salaries;
+  FUNCTION get_avg_sal(
+      p_dept_id NUMBER)
+    RETURN NUMBER;
+END EMPLOYEE_PKG;
+
+--and the package body is 
+create or replace PACKAGE BODY EMPLOYEE_PKG
+AS
+  PROCEDURE increase_salaries
+  AS
+  BEGIN
+    FOR item IN cur_emps
+    LOOP
+      UPDATE employees SET salary = salary+(salary*v_salary_increase_rate/100);
+    END LOOP;
+  END increase_salaries;
+  FUNCTION get_avg_sal(
+      p_dept_id NUMBER)
+    RETURN NUMBER
+  AS
+  v_avg_sal number;
+  BEGIN
+   select avg(salary) into v_avg_sal from employees where DEPARTMENT_ID=p_dept_id;
+   return v_avg_sal;
+  END get_avg_sal;
+END EMPLOYEE_PKG;
+
+--how to we call this package items..
+   
+BEGIN
+  EMPLOYEE_PKG.increase_salaries  ;  
+END;
+
+/
+begin
+DBMS_OUTPUT.PUT_LINE( EMPLOYEE_PKG.get_avg_sal(90));
+end;
+
+
