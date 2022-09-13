@@ -1,0 +1,37 @@
+
+Default Option
+------------------------------
+CREATE OR REPLACE PROCEDURE proc_default_val(
+    p_default_param VARCHAR2 DEFAULT 'This is default parameter in stored procedure')
+AS
+BEGIN
+  dbms_output.put_line(p_default_param);
+END;
+/
+SET serveroutput ON;
+/
+execute proc_default_val;
+/
+execute proc_default_val('Modified param value');
+/
+
+
+
+Name Notations
+--------------------
+CREATE OR REPLACE PROCEDURE name_not_proc(
+    text_param VARCHAR2,
+    min_salary NUMBER,
+    max_salary NUMBER)
+AS
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(text_param);
+  DBMS_OUTPUT.PUT_LINE('min_salary'|| min_salary);
+  DBMS_OUTPUT.PUT_LINE('max_salary'|| max_salary);
+END;
+/
+
+--now we will call the procedure with notations
+
+execute name_not_proc(max_salary=>452124,text_param=>'This is text from procedure calling',min_salary=>457888);
+

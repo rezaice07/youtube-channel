@@ -1,0 +1,24 @@
+
+
+Function:
+----------------
+A function is a subprogram that is used to return a single value.
+You must declare and define a function before invoking it. It is a database object.
+
+Procedure:
+----------------
+A Procedure is a subprogram that is used to perform some task but can not return value.
+You must declare and define a function before invoking it. It is a database object. 
+
+Why we use?
+-----------
+	Reusability
+	Compiled only once
+	Stored in database as a object
+	can take parameter like in and out parameter
+	
+	
+
+	
+
+

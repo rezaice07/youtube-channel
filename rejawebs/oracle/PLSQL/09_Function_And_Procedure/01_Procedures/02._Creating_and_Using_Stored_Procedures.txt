@@ -1,0 +1,47 @@
+
+Creating and using stored procedure
+-------------------------------------
+
+--let's create a stored procedure with the name of Increase_salaries
+
+CREATE OR REPLACE PROCEDURE Increase_salaries(
+    p_department_id IN EMPLOYEES.DEPARTMENT_ID%type,
+    p_increase_rate IN NUMBER ,
+    o_Msg OUT VARCHAR2 )
+AS
+  CURSOR cur_employees
+  IS
+    SELECT *FROM employees e WHERE e.Department_Id = p_department_id;
+BEGIN
+  FOR item IN cur_employees
+  LOOP
+    UPDATE employees SET salary = salary+ (salary*p_increase_rate/100) where employee_id=item.employee_id;
+    COMMIT;
+  END LOOP;
+  o_Msg :='Employee Salary Increased Successfully.';
+  exception
+    when others then
+       pMsg:= 'Employee Salary is not Increased. Error =>' ||sqlerrm;
+       rollback;
+    End;
+END Increase_salaries;
+
+
+--Now we will call the procedure Increase_salaries
+
+/
+SET serveroutput ON;
+/
+DECLARE
+  p_department_id EMPLOYEES.DEPARTMENT_ID%type := 90;
+  p_increase_rate NUMBER := 1.75;
+  o_Msg VARCHAR2(250);
+BEGIN
+  Increase_salaries(p_department_id,p_increase_rate,o_Msg);
+  DBMS_OUTPUT.put_line(o_Msg);
+END;
+/
+
+
+
+
