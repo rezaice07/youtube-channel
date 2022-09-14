@@ -1,0 +1,58 @@
+
+
+Understanding DML Triggers
+---------------------------------
+DML operation like insert, delete and update
+
+Syntax:
+--------
+
+create or replace trigger trigger_name
+timing = before | after | instead of 
+Event = insert |update | delete | update of column_list
+on object_name=table | view
+[reference old as old new as new]
+[for each row]
+[when condition]
+[declare variables, types, etc]
+begin
+
+trigger_body
+[exception]
+
+end;
+
+--A TRIGGER ON BEFORE AND insert |update | delete | update
+
+SET serveroutput ON;
+/
+CREATE OR REPLACE TRIGGER TRG_EMPLOYEES BEFORE
+  INSERT OR
+  UPDATE OR
+  DELETE ON EMPLOYEE_COPY 
+  BEGIN 
+  DBMS_OUTPUT.PUT_LINE('THIS IS TRIGGER ON BEFORE INSERT OR DELETE OR UPDATE OPERATIONS');
+  
+END TRG_EMPLOYEES;
+
+
+--NOW WE WILL UPDATE SOME VALUES
+/
+
+UPDATE EMPLOYEE_COPY
+SET SALARY = SALARY - (SALARY*10/100);
+WHERE EMPLOYEE_ID=100;
+
+/
+
+
+DELETE FROM EMPLOYEE_COPY
+WHERE EMPLOYEE_ID=100;
+
+/
+SELECT *FROM EMPLOYEE_COPY
+WHERE EMPLOYEE_ID=100;
+
+
+
+
