@@ -1,0 +1,95 @@
+
+Performing Complete Recovery
+-----------------------------
+
+SQL> shutdown immediate;
+
+SQL> startup mount;
+
+SQL> alter database archivelog;
+
+SQL> archive log list;
+
+SQL> alter database open;
+
+RMAN> backup incremental level 0 database;
+
+SQL> insert into test_reoc values( 3, 'After fullbackup');
+
+SQL> commit;
+
+SQL> select * from test_reoc;
+
+ 
+SQL> insert into test_reoc values( 4, 'After backup but not commit');
+
+SQL> select * from test_reoc;
+
+
+
+SQL> select Name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1107575803
++DATA/DBA167/DATAFILE/resumetab01.dbf
++DATA/DBA167/DATAFILE/sysaux.258.1107575839
++DATA/DBA167/DATAFILE/undotbs1.259.1107575853
++DATA/DBA167/DATAFILE/dba167tab1
++DATA/DBA167/DATAFILE/users.260.1107575855
++DATA/DBA167/DATAFILE/audittab.269.1110732263
++DATA/DBA167/DATAFILE/rmantab.271.1113838853
+/u01/app/oracle/oradata/test_corp_tab01.dbf
+/u01/app/oracle/oradata/undotab201.dbf
+
+10 rows selected.
+
+wil delete +DATA/DBA167/DATAFILE/users.260.1107575855
+
+before doing that operation first we need to shutdown the database
+
+SQL> shutdown abort;
+
+ASMCMD> ls
+AUDITTAB.269.1110732263
+DBA167TAB1.267.1109361675
+RESUMETAB.268.1115180043
+RMANTAB.271.1113838853
+SYSAUX.258.1107575839
+SYSTEM.257.1107575803
+UNDOTBS1.259.1107575853
+USERS.260.1107575855
+dba167tab1
+resumetab01.dbf
+
+ASMCMD> rm USERS.260.1107575855
+
+SQL> startup;
+
+connected to target database (not started)
+stOracle instance started
+database mounted
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of startup command at 09/19/2022 05:28:46
+ORA-01157: cannot identify/lock data file 7 - see DBWR trace file
+ORA-01110: data file 7: '+DATA/DBA167/DATAFILE/users.260.1107575855'
+
+--offline the datafile 7
+SQL> alter database datafile 7 offline;
+
+RMAN> restore tablespace users; 
+RMAN> recover tablespace users;
+RMAN> alter tablespace users online;
+
+SQL> alter system flush buffer_cache;
+
+SQL> select * from test_reoc;
+
+
+
+
+
+
+

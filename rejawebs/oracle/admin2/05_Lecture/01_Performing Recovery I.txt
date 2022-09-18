@@ -147,32 +147,10 @@ ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
 
 --Error occurred
 
+--now restore database in mount stage
 RMAN> restore database;
 
-Starting restore at 08-SEP-22
-using target database control file instead of recovery catalog
-allocated channel: ORA_DISK_1
-channel ORA_DISK_1: SID=26 device type=DISK
-
-RMAN-00571: ===========================================================
-RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
-RMAN-00571: ===========================================================
-RMAN-03002: failure of restore command at 09/08/2022 05:02:09
-RMAN-06026: some targets not found - aborting restore
-RMAN-06023: no backup or copy of datafile 1 found to restore
-
-
---and alos tyr open the database...
-
-SQL> alter database open;
-alter database open
-*
-ERROR at line 1:
-ORA-01157: cannot identify/lock data file 10 - see DBWR trace file
-ORA-01110: data file 10: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
-
-
---need to restore control file in nomount stage and then restore the databse with resetlogs 
+--need to restore control file in nomount stage and then open the databse with resetlogs 
 
 SQL> shutdown immediate;
 
@@ -186,12 +164,6 @@ RMAN> select status from v$instance;
 STATUS
 ------------
 STARTED
-
-
-RMAN> alter database mount;
-
-RMAN> restore database;
-
 
 RMAN> alter database open resetlogs;
 

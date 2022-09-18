@@ -1,0 +1,95 @@
+
+
+SPFILE RESTORE FROM RMAN BACKUP
+----------------------------------------------------
+
+RMAN> Show all
+
+RMAN> CONFIGURATION RETENSION POLICY TO RECOVERY WINDOW OF 30 DAYS;
+
+RMAN> BACKUP DATABASE;
+
+SQL> SHOW PARAMETER SPFILE;
+
+--NOW WE WILL DESTROY THE SPFILE
+SQL> SHUTDOWN IMMEDIATE;
+
+dbs]$ rm spfileorcl.ora 
+
+now try to up the database
+
+SQL> STARTUP;
+
+will return error
+
+
+NOW WELL RESTORE THE CONTROL FILE BY USING RMAN BACKUP
+
+RMAN> STARTUP NOMOUNT FORCE
+
+RMAN> RESTORE SPFILE FROM 'LOCATION_OF SPFILE IN RMAN BACKUP LOCATON';
+
+SQL> SHOW PARAMETER SPFILE;
+
+
+SQL> SHUTDOWN IMMEDIATE;
+
+SQL> STARTUP;.
+
+
+Loss of a Control File
+--------------------------------
+
+SQL> select name from v$controlfile;
+
+SQL> SHUTDOWN IMMEDIATE;
+
+--let's locate the controlfile and delete it 
+orcl> mv controlfile02.ctl controlfile02.ctl_
+
+SQL>  STARTUP;
+WIll return an error and also can be views in alert log;
+
+
+--let's locate the controlfile and delete it 
+orcl> mv controlfile02.ctl controlfile02.ctl_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
