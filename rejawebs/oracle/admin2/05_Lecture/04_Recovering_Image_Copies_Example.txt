@@ -1,0 +1,41 @@
+Recovering Image Copies Example
+------------------------------------
+
+RMAN> recover copy of database with tag 'daily_inc';
+RMAN> backup incremental level 1 for recover of copy with tag 'daily_inc' database;
+
+
+SQL> insert into test_reoc values(5,'day2');
+SQL> Commit;
+
+SQL> select * from test_reoc;
+
+RMAN> recover copy of database with tag 'daily_inc';
+RMAN> backup incremental level 1 for recover of copy with tag 'daily_inc' database;
+
+SQL> insert into test_reoc values(6,'day3');
+SQL> Commit;
+
+ 
+RMAN> recover copy of database with tag 'daily_inc';
+RMAN> backup incremental level 1 for recover of copy with tag 'daily_inc' database;
+
+
+
+SQL> insert into test_reoc values(7,'day4');
+SQL> Commit;
+
+RMAN> 
+
+RUN
+{ 
+ALLOCATE CHANNEL dev1 DEVICE TYPE DISK;
+SQL "ALTER TABLESPACE users OFFLINE IMMEDIATE";
+SET NEWNAME FOR DATAFILE '+DATA/DBA167/DATAFILE/users.260.1115789551' TO '+FRA/DBA167/DATAFILE/USERS.343.1115873987';
+RESTORE TABLESPACE users;
+SWITCH DATAFILE ALL;
+RECOVER TABLESPACE users;
+SQL "ALTER TABLESPACE users ONLINE";
+}
+
+SQL> select * from test_reoc;
