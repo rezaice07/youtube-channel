@@ -27,6 +27,8 @@ SQL> select timestamp_to_scn(to_timestamp('20-09-2022 07:45:21','dd-mm-yyyy hh24
 SQL> create restore point restore_point_20_09_2022_07_45_21_13860942 as of scn 13860942;
 Restore point created.
 
+--Check restore points
+SQL> select * from v$restore_point;
 
 --dropping restore point
 SQL> drop restore point restore_point_20_09_2022_07_45_21_13860942;
@@ -91,7 +93,7 @@ alter database open resetlogs;
 }
 
 
-
+--you can also use scn no to restore 
 RMAN>
 run
 {

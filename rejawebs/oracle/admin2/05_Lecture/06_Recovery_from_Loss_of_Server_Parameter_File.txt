@@ -1,0 +1,102 @@
+
+Recovery from Loss of Server Parameter File
+-----------------------------------------------
+
+show parameter spfile
+
+
+SQL> create pfile='/home/oracle/mypfile_20092022.ora' from spfile;
+
+SQL> Shutdown immediate;
+
+--let's delete pfile and spfile in both locations in dbs and asmcmd
+
+--in dbs
+[oracle@dba167 ~]$ cd $ORACLE_HOME/dbs
+[oracle@dba167 dbs]$ ls
+hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167  snapcf_dba167.f
+[oracle@dba167 dbs]$ mv initdba167.ora initdba167.ora_destroyed
+
+--in asmcmd
+ASMCMD> cd +data/DBA167/PARAMETERFILE
+ASMCMD> ls
+spfile.266.1108647893
+ASMCMD> rm spfile.266.1108647893
+
+--let's shutdown database
+SQL> shutdown immediate;
+
+--let's startup database
+SQL> startup
+ORA-01078: failure in processing system parameters
+LRM-00109: could not open parameter file '/u01/app/oracle/product/19.3.0/db_1/dbs/initdba167.ora'
+
+--showing error 
+--so how to resolve this issue
+
+--first we need to open the databse in nomount stage by backup pfile
+
+SQL> startup nomount pfile='/home/oracle/mypfile_20092022.ora';
+
+--now we need to create the spfile from backup pfile
+SQL> create spfile='+DATA' from pfile='/home/oracle/mypfile_20092022.ora';
+
+--now check the newly created spfile by asmcmd 
+ASMCMD> cd +data/DBA167/PARAMETERFILE
+ASMCMD> ls
+spfile.266.1115955463
+
+--now check the spfile
+SQL> show parameter spfile
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+spfile                               string
+
+--noting showing at all. so we need to shutdown immediately..
+
+SQL> shutdown immediate;
+ORA-01507: database not mounted
+
+
+ORACLE instance shut down.
+
+--now open the database
+SQL> startup;
+ORACLE instance started.
+
+Total System Global Area 4294963272 bytes
+Fixed Size                  8904776 bytes
+Variable Size            2466250752 bytes
+Database Buffers         1811939328 bytes
+Redo Buffers                7868416 bytes
+Database mounted.
+Database opened.
+
+--ohh great! database open successfully.
+--now check the spfile by parameter show....
+
+SQL> show parameter spfile;
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
+                                                 ile.266.1115955463
+												 
+												 
+Thanks....
+												 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
