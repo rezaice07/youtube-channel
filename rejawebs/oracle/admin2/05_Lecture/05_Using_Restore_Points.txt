@@ -1,0 +1,126 @@
+
+Using Restore Points
+--------------------------
+
+--let's create a restore point
+SQL> create restore point myrestorepoint;
+
+--check current scn
+
+SQL> select current_scn from v$database;
+
+SQL>/
+SQL>/
+
+
+So value continuously changing..
+
+--now we will convert time to scn
+
+--search on google by timestamp_to_scn 19c
+and use the following link https://smarttechways.com/2018/09/05/convert-timestamp-to-scn-and-scn-to-timestamp-in-oracle/
+
+SQL> select timestamp_to_scn(to_timestamp('20-09-2022 07:45:21','dd-mm-yyyy hh24:mi:ss')) scn from dual;
+
+
+--let's create a restore point using scn by using above scn value
+SQL> create restore point restore_point_20_09_2022_07_45_21_13860942 as of scn 13860942;
+Restore point created.
+
+
+--dropping restore point
+SQL> drop restore point restore_point_20_09_2022_07_45_21_13860942;
+
+Restore point dropped.
+
+--now will backup database
+RMAN> backup database;
+
+--lets check table data
+SQL> select * from test_reoc;
+
+        ID NAME
+---------- --------------------------------------------------
+         4 After backup but not commit
+         1 before backup data....
+         5 day2
+         2 Before incremental backup
+         3 After fullbackup
+         6 day3
+         7 day4
+
+7 rows selected.
+
+--now we will create the restore point
+
+SQL> create restore point myrestorepoint2;
+
+--let's insert some to into table
+
+SQL> insert into test_reoc values(8,'after restore point myrestorepoint2');
+
+SQL> insert into test_reoc values(9,'after restore point myrestorepoint2');
+
+--check table data
+SQL> select * from test_reoc;
+
+        ID NAME
+---------- --------------------------------------------------         
+         4 After backup but not commit
+         1 before backup data....
+         5 day2
+         2 Before incremental backup
+         3 After fullbackup
+         6 day3
+         7 day4
+		 8 after restore point myrestorepoint2
+         9 after restore point myrestorepoint2
+
+9 rows selected.
+
+--as you can see the previous data and we'll restore using the earlier restore point
+RMAN>
+run
+{
+shutdown immediate;
+startup mount;
+set until restore point myrestorepoint2; 
+restore database;
+recover database;
+alter database open resetlogs;
+}
+
+
+
+RMAN>
+run
+{
+shutdown immediate;
+startup mount;
+set until scn 5904718; 
+restore database;
+recover database;
+alter database open resetlogs;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
