@@ -324,9 +324,18 @@ RMAN> recover database;
 SQL> alter database open resetlogs;
 
 
+***********************DO NOT CREATE THIS SCENERIO*************************************
 
 Scenario#03
 -------------------------------------------
+
+--first we will shutdown and nomount stage...
+
+SQL> shutdown immediate;
+
+SQL> startup nomount;
+
+**we just wanna take archive in one place not in FRA.....
 
 SQL> show parameter db_reco;
 NAME                                 TYPE        VALUE
@@ -334,8 +343,155 @@ NAME                                 TYPE        VALUE
 db_recovery_file_dest                string      +FRA
 db_recovery_file_dest_size           big integer 8256M
 
+--we just want to change the db_recovery_file_dest path and will not store any recovery file
+
+SQL> alter database set db_recovery_file_dest = '';
+
 
 SQL> show parameter log_archive;
+
+--now we will change the archive log path 
+
+--before doing that one will create a path in below location...
+[oracle@dba167 oracle]$ cd /u01/app/oracle
+[oracle@dba167 oracle]$ mkdir arc1
+
+
+SQL> alter system set log_archive_dest_1='LOCATION=/u01/app/oracle/arc1';
+
+System altered.
+
+--so our archive will store in "/u01/app/oracle/arc1"
+
+--check now 
+SQL> show parameter log_archive;
+
+
+--now we will mount and open the database;
+
+SQL> alter database mount;
+
+Database altered.
+
+SQL> alter database open;
+
+--and will inssert some data in table  and aslo do logfile switch
+SQL> insert into test_reoc values(10,'test reco 10');
+
+SQL> insert into test_reoc values(11,'test reco 11');
+
+SQL> commit;
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> /
+
+System altered.
+
+SQL> /
+/
+/
+System altered.
+
+SQL>
+System altered.
+
+SQL> /
+
+System altered.
+
+SQL>
+
+--Now we'll check the archive logs due to our log switching...
+[oracle@dba167 arc1]$ cd /u01/app/oracle/arc1
+ 
+[oracle@dba167 arc1]$ ls -larth
+total 9.1M
+drwxrwxr-x. 13 oracle oinstall  172 Sep 22 00:17 ..
+-rw-r-----.  1 oracle asmadmin 9.1M Sep 22 02:04 2e97a5a3_1_4_1115942947.arc
+-rw-r-----.  1 oracle asmadmin 1.0K Sep 22 02:04 2e97a5a3_1_5_1115942947.arc
+-rw-r-----.  1 oracle asmadmin 5.5K Sep 22 02:04 2e97a5a3_1_6_1115942947.arc
+-rw-r-----.  1 oracle asmadmin 1.0K Sep 22 02:04 2e97a5a3_1_7_1115942947.arc
+drwxr-xr-x.  2 oracle oinstall  181 Sep 22 02:04 .
+-rw-r-----.  1 oracle asmadmin 1.0K Sep 22 02:04 2e97a5a3_1_8_1115942947.arc
+[oracle@dba167 arc1]$
+
+
+--now we will create a directory where will get backup
+[oracle@dba167 ~]$ cd /home/oracle
+
+[oracle@dba167 ~]$ mkdir rmanbkp;
+
+[oracle@dba167 ~]$ cd rmanbkp
+[oracle@dba167 rmanbkp]$ pwd
+/home/oracle/rmanbkp
+[oracle@dba167 rmanbkp]$
+
+
+get backup for both datafile and controlfile
+
+--As you can see ..we will change value for autobackup off
+RMAN> show all;
+
+using target database control file instead of recovery catalog
+RMAN configuration parameters for database with db_unique_name DBA167 are:
+CONFIGURE RETENTION POLICY TO REDUNDANCY 1; # default
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP ON; # default
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF;
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE RMAN OUTPUT TO KEEP FOR 7 DAYS; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/19.3.0/db_1/dbs/snapcf_dba167.f'; # default
+
+
+--let's do it...
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP OFF;
+
+new RMAN configuration parameters:
+CONFIGURE CONTROLFILE AUTOBACKUP OFF;
+new RMAN configuration parameters are successfully stored
+
+--now we will get backup
+RMAN>  
+run 
+{
+backup format '/home/oracle/rmanbkp/fullDatabase_%U.bkp' database;
+backup format '/home/oracle/rmanbkp/Controlfile%U.bkp' current controlfile;
+}
+
+--files....
+[oracle@dba167 rmanbkp]$ cd /home/oracle/rmanbkp
+[oracle@dba167 rmanbkp]$ ls -larth
+total 2.2G
+drwx------. 23 oracle oinstall 4.0K Sep 22 02:17 ..
+-rw-r-----.  1 oracle asmadmin 810M Sep 22 02:31 fullDatabase_3i18aooe_1_1.bkp
+-rw-r-----.  1 oracle asmadmin 1.5M Sep 22 02:31 fullDatabase_3j18aoot_1_1.bkp
+-rw-r-----.  1 oracle asmadmin 717M Sep 22 02:32 fullDatabase_3k18aoov_1_1.bkp
+-rw-r-----.  1 oracle asmadmin 605M Sep 22 02:32 fullDatabase_3l18aop6_1_1.bkp
+-rw-r-----.  1 oracle asmadmin  19M Sep 22 02:32 fullDatabase_3m18aopd_1_1.bkp
+-rw-r-----.  1 oracle asmadmin  11M Sep 22 02:32 fullDatabase_3n18aope_1_1.bkp
+drwxr-xr-x.  2 oracle oinstall  263 Sep 22 02:32 .
+-rw-r-----.  1 oracle asmadmin  11M Sep 22 02:32 Controlfile3o18aoph_1_1.bkp
+
+
+
+
+
+
+
+
+
+
 
 
 
