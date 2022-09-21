@@ -1,0 +1,358 @@
+
+Recovering From the loss of All Control File Copies
+-----------------------------------------------------
+
+Scenario#02
+------------------------------------
+--login to rman
+rman target /
+
+--first we will delete some unwanted backup
+RMAN> delete backup;
+
+--now we will get backup the controlfile in trace
+SQL> alter database backup Controlfile to trace;
+
+--let's check the trace file to take the create script for controlfile file..
+[oracle@dba167 /]$ cat /u01/app/oracle/diag/rdbms/dba167/dba167/trace/alert_dba167.log
+
+--we can have a path for controlfile creation from logs
+
+Backup controlfile written to trace file /u01/app/oracle/diag/rdbms/dba167/dba167/trace/dba167_ora_8163.trc
+Completed: alter database backup Controlfile to trace
+
+copy the controlfile create script like below...
+
+[oracle@dba167 /]$ cat /u01/app/oracle/diag/rdbms/dba167/dba167/trace/dba167_ora_8163.trc
+
+--controlfile create script
+
+CREATE CONTROLFILE REUSE DATABASE "DBA167" RESETLOGS  ARCHIVELOG
+    MAXLOGFILES 16
+    MAXLOGMEMBERS 3
+    MAXDATAFILES 100
+    MAXINSTANCES 8
+    MAXLOGHISTORY 292
+LOGFILE
+  GROUP 1 (
+    '+DATA/DBA167/ONLINELOG/group_1.262.1106721891',
+    '+FRA/DBA167/ONLINELOG/group_1.257.1106721895'
+  ) SIZE 200M BLOCKSIZE 512,
+  GROUP 2 (
+    '+DATA/DBA167/ONLINELOG/group_2.264.1106721891',
+    '+FRA/DBA167/ONLINELOG/group_2.258.1106721895'
+  ) SIZE 200M BLOCKSIZE 512,
+  GROUP 3 (
+    '+DATA/DBA167/ONLINELOG/group_3.263.1106721891',
+    '+FRA/DBA167/ONLINELOG/group_3.259.1106721895'
+  ) SIZE 200M BLOCKSIZE 512
+-- STANDBY LOGFILE
+DATAFILE
+  '+DATA/DBA167/DATAFILE/system.257.1106721763',
+  '+DATA/DBA167/DATAFILE/testtab101',
+  '+DATA/DBA167/DATAFILE/sysaux.258.1106721809',
+  '+DATA/DBA167/DATAFILE/undotbs1.259.1106721833',
+  '+DATA/DBA167/DATAFILE/dba167tab1',
+  '/u01/app/oracle/oradata/users01.dbf',
+  '+DATA/DBA167/DATAFILE/testtab2.268.1109876153',
+  '+FRA/DBA167/DATAFILE/testtab401.dbf',
+  '+FRA/DBA167/Backup_DATAFILE/testundo.dbf',
+  '/u01/app/oracle/oradata/test_corp_tab01.dbf',
+  '/u01/app/oracle/oradata/undotab201.dbf'
+CHARACTER SET AL32UTF8
+;
+
+--now we will switch log in several times...
+SQL> alter system switch logfile;
+SQL> /
+SQL> /
+SQL> /
+SQL> /
+SQL> /
+SQL> /
+
+--check controlfile and copy them..
+SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/CONTROLFILE/current.261.1115999117
++FRA/DBA167/CONTROLFILE/current.256.1106721889
+
+--let's copy the result
+
+SQL> shutdown immediate;
+
+--now delete possible control files from asmcmd in both +DATA and +FRA locations
+
+--asmcmd
+
+--in data
+
+ASMCMD> cd +DATA/DBA167/CONTROLFILE
+ASMCMD> ls
+current.261.1115999117
+ASMCMD> rm -rf *
+
+
+--in fra
+ASMCMD> cd +FRA/DBA167/CONTROLFILE/
+ASMCMD> ls
+Current.256.1106721889
+ASMCMD> rm Current.256.1106721889
+
+--startup database
+SQL> startup
+Error Orccurred 
+
+--now run controlfile create script on nomount stage
+SQL>
+CREATE CONTROLFILE REUSE DATABASE "DBA167" RESETLOGS  ARCHIVELOG
+    MAXLOGFILES 16
+    MAXLOGMEMBERS 3
+    MAXDATAFILES 100
+    MAXINSTANCES 8
+    MAXLOGHISTORY 292
+LOGFILE
+  GROUP 1 (
+    '+DATA/DBA167/ONLINELOG/group_1.262.1106721891',
+    '+FRA/DBA167/ONLINELOG/group_1.257.1106721895'
+  ) SIZE 200M BLOCKSIZE 512,
+  GROUP 2 (
+    '+DATA/DBA167/ONLINELOG/group_2.264.1106721891',
+    '+FRA/DBA167/ONLINELOG/group_2.258.1106721895'
+  ) SIZE 200M BLOCKSIZE 512,
+  GROUP 3 (
+    '+DATA/DBA167/ONLINELOG/group_3.263.1106721891',
+    '+FRA/DBA167/ONLINELOG/group_3.259.1106721895'
+  ) SIZE 200M BLOCKSIZE 512
+-- STANDBY LOGFILE
+DATAFILE
+  '+DATA/DBA167/DATAFILE/system.257.1106721763',
+  '+DATA/DBA167/DATAFILE/testtab101',
+  '+DATA/DBA167/DATAFILE/sysaux.258.1106721809',
+  '+DATA/DBA167/DATAFILE/undotbs1.259.1106721833',
+  '+DATA/DBA167/DATAFILE/dba167tab1',
+  '/u01/app/oracle/oradata/users01.dbf',
+  '+DATA/DBA167/DATAFILE/testtab2.268.1109876153',
+  '+FRA/DBA167/DATAFILE/testtab401.dbf',
+  '+FRA/DBA167/Backup_DATAFILE/testundo.dbf',
+  '/u01/app/oracle/oradata/test_corp_tab01.dbf',
+  '/u01/app/oracle/oradata/undotab201.dbf'
+CHARACTER SET AL32UTF8
+;
+
+
+--check instance status
+
+SQL> select status from v$instance;
+STATUS
+------------
+MOUNTED
+
+--now open the database instance
+
+SQL> alter database open;
+alter database open
+*
+ERROR at line 1:
+ORA-01589: must use RESETLOGS or NORESETLOGS option for database open
+
+
+SQL> alter database open resetlogs;
+alter database open resetlogs
+*
+ERROR at line 1:
+ORA-01194: file 11 needs more recovery to be consistent
+ORA-01110: data file 11: '/u01/app/oracle/oradata/test_corp_tab01.dbf'
+
+
+*****************How to we solve this issue....******************************
+--now shutdown database instance
+SQL> shutdown immediate;
+
+--mount database instance
+SQL> startup mount;
+
+set lines 90 pages 100
+col member format a78
+
+--check description of v$log and v%logfile
+desc v$log;
+
+desc v%logfile;
+
+--select some columns from v$log, v%logfile
+SQL> select a.GROUP#,a.SEQUENCE# ,b.MEMBER from v$log a, v$logfile b where a.GROUP#=b.GROUP#;
+
+set lines 300 pages 100
+
+RMAN> recover database until cancel using backup controlfile;
+SQL> set lines 300 pages 100
+SQL> /
+
+    GROUP#  SEQUENCE# MEMBER
+---------- ---------- ------------------------------------------------------------------------------
+         1          0 +DATA/DBA167/ONLINELOG/group_1.262.1106721891
+         1          0 +FRA/DBA167/ONLINELOG/group_1.257.1106721895
+         3          0 +FRA/DBA167/ONLINELOG/group_3.259.1106721895
+         2          0 +FRA/DBA167/ONLINELOG/group_2.258.1106721895
+         3          0 +DATA/DBA167/ONLINELOG/group_3.263.1106721891
+         2          0 +DATA/DBA167/ONLINELOG/group_2.264.1106721891
+
+6 rows selected.
+
+RMAN> recover database;
+
+RMAN> alter database open resetlogs;
+
+RMAN> alter database open;
+
+
+ --------------------
+ 
+backup database;
+
+--copy the controlfile location
+
+--
+alter system switch logfile;
+/
+/
+/
+/
+/
+
+--
+shutdown immediate;
+
+--delete controlfile from both +DATA and +FRA
+
+--
+startup
+
+
+--
+RMAM> restore controlfile from 'backup loaction';
+
+
+RMAN> alter database mount;
+
+RMAN> recover database;
+
+RMAN> alter database open resetlogs;
+
+
+
+--Note: your pfile has not been updated. so you need to update your pfile by spfile
+SQL> Shutdown immediate;
+SQL> startup nomount;
+
+--destroy or backup the original pfile
+[oracle@dba167 dbs]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs
+[oracle@dba167 dbs]$ mv initdba167.ora initdba167.ora_bak
+
+--Now create pfile from spfile...
+
+SQL> create pfile='/u01/app/oracle/product/19.3.0/db_1/dbs/initdba167.ora' from spfile='+data/dba167/PARAMETERFILE/spfile.284.1116000513';
+
+
+SQL> alter database mount;
+
+Database altered.
+
+SQL> alter database open;
+
+Database altered.
+
+SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/CONTROLFILE/current.261.1116017501
++FRA/DBA167/CONTROLFILE/current.256.1116017501
+
+
+
+Scenario#01
+---------------------------------
+
+--delete existing backup first
+RMAN> delete backup
+
+RMAN> backup database
+
+Starting Control File and SPFILE Autobackup at 21-SEP-22
+piece handle=+FRA/DBA167/AUTOBACKUP/2022_09_21/s_1116019842.280.1116019843 comment=NONE
+Finished Control File and SPFILE Autobackup at 21-SEP-22
+
+Note: +FRA/DBA167/AUTOBACKUP/2022_09_21/s_1116019842.280.1116019843 is the control file backup location.
+
+--now we will insert some data and switch log
+SQL> insert into test_reoc values(10,'After backup-10');
+
+SQL> insert into test_reoc values(11,'After backup-11');
+
+SQL> COMMIT;
+
+SQL> alter system switch logfile;
+
+SQL> /
+SQL> /
+
+SQL> /
+SQL> /
+
+--shutdown instance
+
+SQL> shutdown immediate;
+
+--delete control file from asmcmd
+ASMCMD> cd +data/dba167/CONTROLFILE
+ASMCMD> rm Current.261.1116017501
+
+--nomount instance
+SQL> startup nomount;
+
+--restore control file from autobackup
+RMAN> restore controlfile from '+FRA/DBA167/AUTOBACKUP/2022_09_21/s_1116019842.280.1116019843';
+
+SQL> alter database mount;
+
+RMAN> recover database;
+
+SQL> alter database open resetlogs;
+
+
+
+Scenario#03
+-------------------------------------------
+
+SQL> show parameter db_reco;
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+db_recovery_file_dest                string      +FRA
+db_recovery_file_dest_size           big integer 8256M
+
+
+SQL> show parameter log_archive;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

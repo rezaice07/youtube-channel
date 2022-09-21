@@ -1,0 +1,32 @@
+
+Loss of a control file
+-----------------------------
+
+--check control file
+SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/CONTROLFILE/current.261.1106721887
++FRA/DBA167/CONTROLFILE/current.256.1106721889
+
+
+--now we will restore in nomount stage...
+SQL> shutdown immediate
+
+--now we delete the existing control file
+asmcmd> rm +DATA/DBA167/CONTROLFILE/current.261.1106721887
+
+
+
+SQL> startup nomount force;
+
+--now we will restore control file from FRA...
+RMAN> restore controlfile from '+FRA/DBA167/CONTROLFILE/current.256.1106721889';
+
+
+SQL> alter database mount;
+
+
+SQL> alter database open;
+
