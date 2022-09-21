@@ -83,7 +83,102 @@ NAME                                 TYPE        VALUE
 spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
                                                  ile.266.1115955463
 												 
-												 
+		
+---Please ignore below section to be implemented------------------------------------------------------
+Getting Spfile RMAN Backup
+----------------------------
+--Get backup and see the below section of controlfile and spfile backup
+RMAN> backup database;
+
+Starting Control File and SPFILE Autobackup at 21-SEP-22
+piece handle=+FRA/DBA167/AUTOBACKUP/2022_09_21/s_1115989153.339.1115989153 comment=NONE
+Finished Control File and SPFILE Autobackup at 21-SEP-22
+
+--So +FRA/DBA167/AUTOBACKUP/2022_09_21/s_1115989153.339.1115989153 is the location.
+
+--If you want, you can get backup by using 
+
+RMAN> backup spfile;
+
+Starting backup at 21-SEP-22
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current SPFILE in backup set
+channel ORA_DISK_1: starting piece 1 at 21-SEP-22
+channel ORA_DISK_1: finished piece 1 at 21-SEP-22
+piece handle=+FRA/DBA167/BACKUPSET/2022_09_21/nnsnf0_tag20220921t130544_0.290.1115989545 tag=TAG20220921T130544 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 21-SEP-22
+
+Starting Control File and SPFILE Autobackup at 21-SEP-22
+piece handle=+FRA/DBA167/AUTOBACKUP/2022_09_21/s_1115989546.264.1115989547 comment=NONE
+Finished Control File and SPFILE Autobackup at 21-SEP-22
+
+
+--check list of backup summmary
+
+RMAN> list backup summary;
+
+--get spfile backup by using tag name
+RMAN> backup spfile tag='spfile backup 21-Sep-2022';
+	
+Starting backup at 21-SEP-22
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+including current SPFILE in backup set
+channel ORA_DISK_1: starting piece 1 at 21-SEP-22
+channel ORA_DISK_1: finished piece 1 at 21-SEP-22
+piece handle=+FRA/DBA167/BACKUPSET/2022_09_21/nnsnf0_spfile backup 21-sep-2022_0.323.1115989771 tag=SPFILE BACKUP 21-SEP-2022 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 21-SEP-22
+
+Starting Control File and SPFILE Autobackup at 21-SEP-22
+piece handle=+FRA/DBA167/AUTOBACKUP/2022_09_21/s_1115989772.322.1115989773 comment=NONE
+Finished Control File and SPFILE Autobackup at 21-SEP-22
+
+RMAN> list backup summary;
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+132     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T125905
+133     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T125905
+134     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T125905
+135     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T125905
+136     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T125905
+137     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T125913
+138     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T130544
+139     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T130546
+140     B  F  A DISK        21-SEP-22       1       1       NO         SPFILE BACKUP 21-SEP-2022
+141     B  F  A DISK        21-SEP-22       1       1       NO         TAG20220921T130932
+	
+
+--now we will restore the spfile from rman autobackup....
+
+--before executing restore command we will delete possible spfile from asmcmd and pfile and force startup command
+
+--asm spfile
+ASMCMD> cd +data/dba167/PARAMETERFILE
+ASMCMD> ls
+spfile.266.1115955463
+ASMCMD> rm spfile.266.1115955463
+
+--oracle home pfile
+[oracle@dba167 ~]$ cd $ORACLE_HOME/dbs
+[oracle@dba167 dbs]$ ls
+hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167  snapcf_dba167.f
+[oracle@dba167 dbs]$ mv initdba167.ora initdba167.ora_destroyed
+
+RMAN>/SQL> shutdown immediate;
+RMAN>/SQL> startup nomount force;
+
+RMAN> restore spfile from '+FRA/DBA167/BACKUPSET/2022_09_21/nnsnf0_spfile backup 21-sep-2022_0.323.1115989771'
+
+--now 
+
+	
 Thanks....
 												 
 
