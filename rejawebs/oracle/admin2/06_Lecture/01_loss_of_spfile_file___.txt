@@ -3,6 +3,9 @@
 SPFILE RESTORE FROM RMAN BACKUP
 ----------------------------------------------------
 
+--RMAN backup that is responsible to take backup datafile,controlfile,spfile and archive file
+--RMAN backup is physical(file backup) and expdb logical(database,schema) backup
+
 RMAN> Show all
 
 RMAN> CONFIGURATION RETENSION POLICY TO RECOVERY WINDOW OF 30 DAYS;
@@ -11,23 +14,41 @@ RMAN> BACKUP DATABASE;
 
 SQL> SHOW PARAMETER SPFILE;
 
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+spfile                               string      +DATA/DBA167/PARAMETERFILE/spf
+                                                 ile.266.1115993703
+
 --NOW WE WILL DESTROY THE SPFILE
 SQL> SHUTDOWN IMMEDIATE;
 
 dbs]$ rm spfileorcl.ora 
 
-now try to up the database
+--now try to up the database
 
-SQL> STARTUP;
+SQL> startup;
+ORA-01078: failure in processing system parameters
+LRM-00109: could not open parameter file '/u01/app/oracle/product/19.3.0/db_1/dbs/initdba167.ora'
 
-will return error
+--Now we will delete spfile from both asm and oracle home directory
+ASMCMD> cd PARAMETERFILE/
+ASMCMD> ls
+spfile.266.1115993703
+ASMCMD> rm spfile.266.1115993703
 
 
-NOW WELL RESTORE THE CONTROL FILE BY USING RMAN BACKUP
+[oracle@dba167 ~]$ cd /u01/app/oracle/product/19.3.0/db_1/dbs
+[oracle@dba167 dbs]$ ls
+hc_dba167.dat  initdba167.ora  lkDBA167  orapwdba167  snapcf_dba167.f
+[oracle@dba167 dbs]$ mv initdba167.ora initdba167.ora_BAK
+[oracle@dba167 dbs]$ ls
+hc_dba167.dat  initdba167.ora_BAK  lkDBA167  orapwdba167  snapcf_dba167.f
+
+--NOW WELL RESTORE THE CONTROL FILE BY USING RMAN BACKUP
 
 RMAN> STARTUP NOMOUNT FORCE
 
-RMAN> RESTORE SPFILE FROM 'LOCATION_OF SPFILE IN RMAN BACKUP LOCATON';
+RMAN> RESTORE SPFILE FROM '/home/oracle/RMAN_BAKUP_DEST/DBA167/autobackup/2022_09_22/o1_mf_s_1116077701_klr4155s_.bkp';
 
 SQL> SHOW PARAMETER SPFILE;
 

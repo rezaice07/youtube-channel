@@ -274,7 +274,7 @@ NAME
 
 
 
-Scenario#01
+Scenario#02
 ---------------------------------
 
 --delete existing backup first
@@ -345,7 +345,7 @@ db_recovery_file_dest_size           big integer 8256M
 
 --we just want to change the db_recovery_file_dest path and will not store any recovery file
 
-SQL> alter database set db_recovery_file_dest = '';
+SQL> alter system set db_recovery_file_dest = '/home/oracle/RMAN_BAKUP_DEST';
 
 
 SQL> show parameter log_archive;
