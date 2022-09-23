@@ -1,0 +1,57 @@
+
+Loss of a Control File
+--------------------------------
+
+SQL> select name from v$controlfile;
+
+SQL> SHUTDOWN IMMEDIATE;
+
+--let's locate the controlfile and delete it 
+orcl> mv controlfile02.ctl controlfile02.ctl_
+
+SQL>  STARTUP;
+WIll return an error and also can be views in alert log;
+
+
+--let's locate the controlfile and delete it 
+orcl> mv controlfile02.ctl controlfile02.ctl_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
