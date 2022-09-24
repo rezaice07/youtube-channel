@@ -10,6 +10,9 @@ RMAN> Show all
 
 RMAN> CONFIGURATION RETENSION POLICY TO RECOVERY WINDOW OF 30 DAYS;
 
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP ON;
+
+
 RMAN> BACKUP DATABASE;
 
 SQL> SHOW PARAMETER SPFILE;
@@ -47,33 +50,23 @@ hc_dba167.dat  initdba167.ora_BAK  lkDBA167  orapwdba167  snapcf_dba167.f
 --NOW WELL RESTORE THE CONTROL FILE BY USING RMAN BACKUP
 
 RMAN> STARTUP NOMOUNT FORCE
+--note if its showing error then reconnect the rman and execute above line.
 
-RMAN> RESTORE SPFILE FROM '/home/oracle/RMAN_BAKUP_DEST/DBA167/autobackup/2022_09_22/o1_mf_s_1116077701_klr4155s_.bkp';
+RMAN> RESTORE SPFILE TO '+DATA' FROM '+FRA/DBA167/AUTOBACKUP/2022_09_24/s_1116222762.345.1116222763';
+
+if not working then try below two option and then if now working 
+--then try again RESTORE SPFILE TO '+DATA' FROM '+FRA/DBA167/AUTOBACKUP/2022_09_24/s_1116222762.345.1116222763';
+RESTORE SPFILE TO '+DATA' FROM AUTOBACKUP;
+RESTORE SPFILE FROM AUTOBACKUP;
 
 SQL> SHOW PARAMETER SPFILE;
 
 
 SQL> SHUTDOWN IMMEDIATE;
 
-SQL> STARTUP;.
+SQL> STARTUP;
 
 
-Loss of a Control File
---------------------------------
-
-SQL> select name from v$controlfile;
-
-SQL> SHUTDOWN IMMEDIATE;
-
---let's locate the controlfile and delete it 
-orcl> mv controlfile02.ctl controlfile02.ctl_
-
-SQL>  STARTUP;
-WIll return an error and also can be views in alert log;
-
-
---let's locate the controlfile and delete it 
-orcl> mv controlfile02.ctl controlfile02.ctl_
 
 
 

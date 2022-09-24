@@ -2,7 +2,16 @@
 Loss of a Control File
 --------------------------------
 
+
+--let's check control files
 SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/CONTROLFILE/current.270.1113952055
++FRA/DBA167/CONTROLFILE/current.260.1113952055
++DATA/DBA167/CONTROLFILE/current03.ctl
++FRA/DBA167/CONTROLFILE/current04.ctl
 
 SQL> SHUTDOWN IMMEDIATE;
 
@@ -10,11 +19,67 @@ SQL> SHUTDOWN IMMEDIATE;
 orcl> mv controlfile02.ctl controlfile02.ctl_
 
 SQL>  STARTUP;
-WIll return an error and also can be views in alert log;
+Will return an error and also can be views in alert log;
+this happen is occurred due to absence of control file
+
+--now we will restore control file from autobackup
+RMAN> restore controlfile from autobackup;
+
+--now mount and open
+
+SQL> alter database mount;
+
+SQL> alter database open RESETLOGS;
+alter database open RESETLOGS
+*
+ERROR at line 1:
+ORA-01152: file 1 was not restored from a sufficiently old backup
+ORA-01110: data file 1: '+DATA/DBA167/DATAFILE/system.257.1107575803'
+
+--now we will recover and open
+RMAN> recover database;
+
+RMAN> alter database open RESETLOGS;
 
 
---let's locate the controlfile and delete it 
-orcl> mv controlfile02.ctl controlfile02.ctl_
+
+**************Special Cases***************************
+if recover not working 
+SQL> recover database until cancel using backup controlfile;
+
+
+--here we can find the changed log sequence and scn. now will compare by below query
+
+SQL> select a.GROUP#,a.SEQUENCE#,b.MEMBER from v$log a,v$logfile b where a.GROUP#=b.GROUP#;
+
+SQL> set lines 400 pages 100
+SQL> col member format a78
+
+SQL> /
+
+    GROUP#  SEQUENCE# MEMBER
+---------- ---------- ------------------------------------------------------------------------------
+         3          0 +DATA/DBA167/ONLINELOG/group_3.264.1115942949
+         3          0 +FRA/DBA167/ONLINELOG/group_3.259.1115942951
+         2          0 +DATA/DBA167/ONLINELOG/group_2.263.1115942949
+         2          0 +FRA/DBA167/ONLINELOG/group_2.258.1115942949
+         1          1 +DATA/DBA167/ONLINELOG/group_1.262.1115942947
+         1          1 +FRA/DBA167/ONLINELOG/group_1.257.1115942949
+
+6 rows selected.
+--from above location will execute after executing : recover database until cancel using backup controlfile;
+
+SQL> recover database until cancel using backup controlfile;
++DATA/DBA167/ONLINELOG/group_1.262.1115942947
+
+SQl> alter database open RESETLOGS;
+
+
+
+
+
+
+
 
 
 
