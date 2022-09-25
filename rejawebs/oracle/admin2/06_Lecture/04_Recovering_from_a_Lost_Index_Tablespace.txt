@@ -43,6 +43,8 @@ SQL> alter user ad quota unlimited on accounting_data_index;
 
 User altered.
 
+SQL> conn ad/ad
+Connected.
 
 SQL> create table acc_data(id number,acc_head varchar2(250));
 
@@ -61,7 +63,7 @@ SQL> insert into acc_data values(2,'Liabilities');
 
 1 row created.
 
-SQL> insert into acc_data values(2,'Equity');
+SQL> insert into acc_data values(3,'Equity');
 
 1 row created.
 
@@ -70,16 +72,124 @@ SQL> commit;
 Commit complete.
 
 execute it in sys user
+SQL> conn / as sysdba
+Connected.
+
+if you have not the temp tablespace then you need to create by following commands...
+SQL> create temporary tablespace TEMP tempfile '+DATA/DBA167/DATAFILE/temp01.dbf' size 100M autoextend on;
+
+SQL> alter database default temporary tablespace TEMP;
+
+--now we will execute the autotrace command...
+
 SQL> set autotrace on;
 
 
-SQL>  select * from ad.acc_data;
+--check table data by using where clause (here id is on index)
+SQL> select * from ad.acc_data where id=1;
+
         ID ACC_HEAD
 ---------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
          1 Assets
-         2 Liabilities
-         2 Equity
-		 
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 2191203347
+
+---------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name        | Rows  | Bytes | Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |             |     1 |   140 |     1   (0)| 00:00:01 |
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| ACC_DATA    |     1 |   140 |     1   (0)| 00:00:01 |
+|*  2 |   INDEX RANGE SCAN                  | ACC_DATA_ID |     1 |       |     1   (0)| 00:00:01 |
+---------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("ID"=1)
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+
+Statistics
+----------------------------------------------------------
+          9  recursive calls
+          0  db block gets
+         13  consistent gets
+          0  physical reads
+          0  redo size
+        633  bytes sent via SQL*Net to client
+        398  bytes received via SQL*Net from client
+          2  SQL*Net roundtrips to/from client
+          0  sorts (memory)
+          0  sorts (disk)
+          1  rows processed
+
+
+--as you can see the above description with the message "INDEX RANGE SCAN   ", so our index working for this query..
+
+[oracle@dba167 ~]$ cd /u01/app/oracle/oradata/
+[oracle@dba167 oradata]$ ls
+accounting_data.dbf  accounting_data_index.dbf  ctl  DBA2022  test_corp_tab01.dbf  undotab201.dbf  users01.dbf
+[oracle@dba167 oradata]$ mv accounting_data_index.dbf accounting_data_index.dbf_
+[oracle@dba167 oradata]$ vi accounting_data_index.dbf
+
+--let's clear cache and query again...
+
+SQL> alter system flush buffer_cache;
+
+System altered.
+
+SQL> select * from ad.acc_data where id=1;
+select * from ad.acc_data where id=1
+*
+ERROR at line 1:
+ORA-01115: IO error reading block from file  (block # )
+ORA-01110: data file 14: '/u01/app/oracle/oradata/accounting_data_index.dbf'
+ORA-27072: File I/O error
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 3
+Additional information: 128
+
+--throwing an error due absence of tablespace's datafile
+
+--Note: we can resolve this issue by re-creating tablespace with datafile 
+
+
+--to avoid re-creating the tablespace, we will rename the file and will check data....
+[oracle@dba167 oradata]$ ls
+accounting_data.dbf        accounting_data_index.dbf_  DBA2022              undotab201.dbf
+accounting_data_index.dbf  ctl                         test_corp_tab01.dbf  users01.dbf
+[oracle@dba167 oradata]$ mv accounting_data_index.dbf_ accounting_data_index.dbf
+
+
+[oracle@dba167 oradata]$ sqlplus / as sysdba;
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Sep 25 17:20:29 2022
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> select * from ad.acc_data where id=1;
+
+        ID
+----------
+ACC_HEAD
+--------------------------------------------------------------------------------
+         1
+Assets
+
+
+
 
 
 
