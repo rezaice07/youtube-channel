@@ -1,0 +1,94 @@
+
+
+Recovering from a Lost Index Tablespace
+-------------------------------------------
+
+SQL> select name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1107575803
++DATA/DBA167/DATAFILE/resumetab01.dbf
++DATA/DBA167/DATAFILE/sysaux.258.1107575839
++DATA/DBA167/DATAFILE/undotbs1.259.1107575853
++DATA/DBA167/DATAFILE/dba167tab1
++DATA/DBA167/DATAFILE/users.260.1115789551
++DATA/DBA167/DATAFILE/audittab.269.1110732263
++DATA/DBA167/DATAFILE/rmantab.271.1113838853
+/u01/app/oracle/oradata/test_corp_tab01.dbf
+/u01/app/oracle/oradata/undotab201.dbf
+
+10 rows selected.
+
+
+SQL> create tablespace accounting_data datafile '/u01/app/oracle/oradata/accounting_data.dbf' size 100M autoextend on;
+Tablespace created.
+
+SQL> create tablespace accounting_data_index datafile '/u01/app/oracle/oradata/accounting_data_index.dbf' size 100M autoextend on;
+
+Tablespace created.
+
+
+SQL> create user ad identified by ad default tablespace accounting_data;
+
+User created.
+
+
+
+SQL> grant create session, resource,unlimited tablespace to ad;
+
+Grant succeeded.
+
+SQL> alter user ad quota unlimited on accounting_data_index;
+
+User altered.
+
+
+SQL> create table acc_data(id number,acc_head varchar2(250));
+
+Table created.
+
+SQL> create index acc_data_id on acc_data(id) tablespace accounting_data_index;
+
+Index created.
+
+
+SQL> insert into acc_data values(1,'Assets');
+
+1 row created.
+
+SQL> insert into acc_data values(2,'Liabilities');
+
+1 row created.
+
+SQL> insert into acc_data values(2,'Equity');
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+execute it in sys user
+SQL> set autotrace on;
+
+
+SQL>  select * from ad.acc_data;
+        ID ACC_HEAD
+---------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+         1 Assets
+         2 Liabilities
+         2 Equity
+		 
+
+
+
+
+
+
+
+
+
+
+
+
