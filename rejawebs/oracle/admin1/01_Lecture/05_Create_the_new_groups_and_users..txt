@@ -1,0 +1,22 @@
+
+Create the new groups and users.
+-----------------------------------------
+
+groupadd -g 1010 oinstall
+groupadd -g 1020 asmadmin
+groupadd -g 1021 asmdba
+groupadd -g 1022 asmoper
+groupadd -g 1031 dba
+groupadd -g 1032 oper
+
+useradd -u 1100 -g oinstall -G dba,asmadmin,asmdba,asmoper,oper grid
+useradd -u 1101 -g oinstall -G dba,asmadmin,asmdba,oper oracle
+
+then set password for grid & oracle user by
+passwd grid
+Password is : grid
+
+passwd oracle
+Password is : oracle
+
+

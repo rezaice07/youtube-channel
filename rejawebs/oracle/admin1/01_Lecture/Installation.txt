@@ -511,12 +511,12 @@ PATH=/u01/app/19.3.0/grid/bin:/usr/sbin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bi
 
 
 
-##################################################################################01
-01. chown -R oracle:oinstall Oracle_Grid\&Database_19c_Linux64bit
-chown -R oracle:oinstall Oracle_Grid\&Database_19c_Linux64bit
+##################################################################################
+01. chown -R oracle:oinstall Oracle_Grid\&Database_19c_Linux64bit by root
+chown -R oracle:oinstall /Installers/Oracle_Grid\&Database_19c_Linux64bit
 
-02. chmod -R 777 Oracle_Grid\&Database_19c_Linux64bit
-chmod -R 777 Oracle_Grid\&Database_19c_Linux64bit
+02. chmod -R 777 /Installers/Oracle_Grid\&Database_19c_Linux64bit by root
+chmod -R 777 /Installers/Oracle_Grid\&Database_19c_Linux64bit
 
 --for grid
 03. Switch User to grid

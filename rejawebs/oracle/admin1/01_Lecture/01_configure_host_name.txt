@@ -1,0 +1,58 @@
+
+--we will connect linux by puttty
+
+--check hostname
+[root@localhost ~]# hostname
+localhost.localdomain
+
+--checking status of host
+[root@localhost ~]# hostnamectl status
+   Static hostname: localhost.localdomain
+         Icon name: computer-vm
+           Chassis: vm
+        Machine ID: b0244411204644019aebd338f5f0bbc0
+           Boot ID: 79bbc68a0bd143af93eac65495301686
+    Virtualization: vmware
+  Operating System: Red Hat Enterprise Linux Server 7.9 (Maipo)
+       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server
+            Kernel: Linux 3.10.0-1160.el7.x86_64
+      Architecture: x86-64
+
+--change hostname...
+[root@localhost ~]# hostnamectl set-hostname dba167.rejawebs.com
+[root@localhost ~]#
+
+--reconnect root user to see effect of changes...
+[root@localhost ~]# su - root
+Last login: Sun Sep 25 17:39:42 +06 2022 on pts/1
+[root@dba167 ~]#
+
+--dba167 ~
+
+--pinging for "ping dba167.rejawebs.com" ok
+--but ping for dba167 not configured. Let's do it 
+
+--now we will open  the host file by vi
+[root@dba167 ~]# vi /etc/hosts
+
+--here will add another line below is look like
+192.168.1.20 dba167.rejawebs.com dba167
+and the save it..
+
+--now ping with dba167
+[root@dba167 ~]# ping dba167
+PING dba167.rejawebs.com (192.168.1.20) 56(84) bytes of data.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
