@@ -1,0 +1,119 @@
+
+
+Restoring and Recovering the Database on a New Host
+-----------------------------------------------------------
+--If you want to generate this type of scenerio, you must same db version and db configuration.
+--For example, destinaton host must be same as like source oracle verson and you have grid with asm
+
+*****first you need to configure the new host with following oracle installations...
+
+https://www.youtube.com/watch?v=tdxOB1nF41U&list=PLzQMf63vaIyfmyG72OpcbCB_ubSkH8a5C&ab_channel=rejawebs
+
+
+--If you have not enable archivelog, enable it first
+SQL> archive log list;
+
+SQL> select name,log_mode from v$database; 
+
+--let's backup for database , controlfile and archivelog
+RMAN>
+run
+{
+allocate channel c1 type disk;
+allocate channel c2 type disk;
+backup as compressed backupset format='/u01/app/oracle/rmanbkp/orclFullDatabase_%U.bkp' database;
+backup as compressed backupset format='/u01/app/oracle/rmanbkp/orclArchiveLog_%U.bkp' archivelog all;
+backup as compressed backupset format='/u01/app/oracle/rmanbkp/orclControlfile_%U.bkp' current controlfile;
+}
+
+--let's copy the pfile and password file to destinaton
+[oracle@dba167 dbs]$ scp initdba167.ora orapwdba167 oracle@192.168.1.20:/u01/app/oracle/product/19.3.0/db_1/dbs
+
+--now create a directory in destinaton
+[oracle@dba167 dbs]$ mkdir -p /u01/app/oracle/rmanbkp/
+
+--let's copy backup file from source to destinaton
+scp * oracle@192.168.1.20:/u01/app/oracle/rmanbkp/
+
+
+--now we will set the database in nomount stage...
+--and then try to restore the controlfile
+
+RMAN> restore controlfile from '/u01/app/oracle/rmanbkp/orclControlfile_4t18mibm_1_1.bkp';
+
+now we set database DBID for current one
+RMAN> SET DBID 781690275  
+
+--now we will restore database in mount stage....
+RMAN> alter database mount;
+
+--let's start catalog with...
+--NOTE: The CATALOG START WITH command allows you to update the RMAN Repository with information about 
+        backup pieces (or archivelogs) in the specified location.
+RMAN> catalog start with '/u01/app/oracle/rmanbkp/';
+
+RMAN> restore database;
+
+--to apply archive logs 
+RMAN> recover database;
+
+
+--expected errro message...
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 09/26/2022 19:07:34
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 4 and starting SCN of 15273164
+
+--means that we will max recover to SCN of 15273164
+--let's resolve this above issue to recover
+RMAN>
+run
+{
+set until scn 15273164;
+recover database;
+}
+
+--now we will open database with resetlogs...
+
+RMAN> alter database open resetlogs;
+
+❤️❤️❤️❤️❤️❤️Happy Ending❤️❤️❤️❤️❤️❤️❤️❤️❤️
+
+--Now we will crosscheck backup
+RMAN> crosscheck backup;
+
+using channel ORA_DISK_1
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/BACKUPSET/2022_09_26/nnndf0_tag20220926t213830_0.269.1116452311 RECID=199 STAMP=1116452311
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/BACKUPSET/2022_09_26/nnndf0_tag20220926t213830_0.268.1116452315 RECID=200 STAMP=1116452314
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/BACKUPSET/2022_09_26/nnndf0_tag20220926t213830_0.267.1116452315 RECID=201 STAMP=1116452315
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/BACKUPSET/2022_09_26/nnndf0_tag20220926t213830_0.266.1116452319 RECID=202 STAMP=1116452318
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/BACKUPSET/2022_09_26/nnndf0_tag20220926t213830_0.261.1116452321 RECID=203 STAMP=1116452321
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/BACKUPSET/2022_09_26/nnndf0_tag20220926t213830_0.265.1116452323 RECID=204 STAMP=1116452323
+crosschecked backup piece: found to be 'AVAILABLE'
+backup piece handle=+FRA/DBA167/AUTOBACKUP/2022_09_26/s_1116452324.260.1116452325 RECID=205 STAMP=1116452324
+Crosschecked 7 objects
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

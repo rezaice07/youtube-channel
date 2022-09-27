@@ -1,0 +1,85 @@
+
+Restoreing Datafile to a different Locations
+---------------------------------------------------
+
+--let's nomount
+RMAN> shutdown immediate;
+
+RMAN> startup nomount;
+
+--first we need to restore controlfile backup
+RMAN> restore controlfile from '/u01/app/oracle/rmanbkp/orclControlfile_4t18mibm_1_1.bkp';
+
+--now we will switch to mount stage
+RMAN> sql 'alter database mount';
+
+--Now we will check datafile locations
+
+SQL> select name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/DBA167/DATAFILE/system.257.1107575803
++DATA/DBA167/DATAFILE/resumetab01.dbf
++DATA/DBA167/DATAFILE/sysaux.258.1107575839
++DATA/DBA167/DATAFILE/undotbs1.259.1107575853
++DATA/DBA167/DATAFILE/dba167tab1
++DATA/DBA167/DATAFILE/users.260.1115789551
++DATA/DBA167/DATAFILE/audittab.269.1110732263
++DATA/DBA167/DATAFILE/rmantab.271.1113838853
+/u01/app/oracle/oradata/test_corp_tab01.dbf
+/u01/app/oracle/oradata/undotab201.dbf
+/u01/app/oracle/oradata/accounting_data.dbf
+
+NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/accounting_data_index.dbf
+
+--let's start catalog with...
+--NOTE: The CATALOG START WITH command allows you to update the RMAN Repository with information about 
+        backup pieces (or archivelogs) in the specified location.
+RMAN> catalog start with '/u01/app/oracle/rmanbkp/';
+
+--Now we will restore datafile in new location
+
+RMAN>
+run
+{
+set newname for database to '/u01/app/oracle/db_file_dest/%b';
+restore database;
+SWITCH DATAFILE ALL;
+SWITCH TEMPFILE ALL;
+recover database;
+alter database open resetlogs;
+}
+
+
+--and after completing above execution and got any error like below
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 09/27/2022 07:54:31
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 4 and starting SCN of 15273164
+
+--So we need to rin below command as well
+
+run
+{
+set until scn 15273164;
+recover database;
+alter database open resetlogs;
+}
+
+❤️❤️❤️❤️❤️❤️Happy Ending❤️❤️❤️❤️❤️❤️❤️❤️❤️
+
+
+
+
+
+
+
+
+
+
+
+
