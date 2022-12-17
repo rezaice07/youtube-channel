@@ -125,7 +125,7 @@ How to create additional Listener
     -How to a listener supports  services of a database
 	 let's add multiple adddress in address list..
 	 
-	alter system set LOCAL_LISTENER="
+	SQL> alter system set LOCAL_LISTENER="
 	(
 		ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1521))
 			         (ADDRESS=(PROTOCOL=TCP)(HOST=192.168.1.10)(PORT=1522))

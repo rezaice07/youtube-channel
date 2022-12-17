@@ -9,6 +9,9 @@ Restoring and Recovering the Database on a New Host
 
 https://www.youtube.com/watch?v=tdxOB1nF41U&list=PLzQMf63vaIyfmyG72OpcbCB_ubSkH8a5C&ab_channel=rejawebs
 
+----NOTE: if you feel any difficulties then try this link below...
+https://dbatricksworld.com/rman-06026-some-targets-not-found-aborting-restore-rman-06023-no-backup-or-copy-of-datafile-x-found-to-restore/
+
 
 --If you have not enable archivelog, enable it first
 SQL> archive log list;
@@ -30,16 +33,18 @@ backup as compressed backupset format='/u01/app/oracle/rmanbkp/orclControlfile_%
 [oracle@dba167 dbs]$ scp initdba167.ora orapwdba167 oracle@192.168.1.20:/u01/app/oracle/product/19.3.0/db_1/dbs
 
 --now create a directory in destinaton
-[oracle@dba167 dbs]$ mkdir -p /u01/app/oracle/rmanbkp/
+[oracle@dba167 dbs]$ mkdir -p /u01/app/oracle/rmanbkp
 
 --let's copy backup file from source to destinaton
-scp * oracle@192.168.1.20:/u01/app/oracle/rmanbkp/
+[oracle@dba167 rmanbkp]$ scp * oracle@192.168.1.20:/u01/app/oracle/rmanbkp
 
 
---now we will set the database in nomount stage...
+--now we will set the database in nomount stage by using newly coppied pfile
+[oracle@dba167 rmanbkp]$ startup nomount pfile='/u01/app/oracle/product/19.3.0/db_1/dbs/initdba167.ora'
+
 --and then try to restore the controlfile
 
-RMAN> restore controlfile from '/u01/app/oracle/rmanbkp/orclControlfile_4t18mibm_1_1.bkp';
+RMAN> restore controlfile from '/u01/app/oracle/rmanbkp/orclControlfile_821980rj_1_1.bkp';
 
 now we set database DBID for current one
 RMAN> SET DBID 781690275  
@@ -50,7 +55,7 @@ RMAN> alter database mount;
 --let's start catalog with...
 --NOTE: The CATALOG START WITH command allows you to update the RMAN Repository with information about 
         backup pieces (or archivelogs) in the specified location.
-RMAN> catalog start with '/u01/app/oracle/rmanbkp/';
+RMAN> catalog start with '/u01/app/oracle/rmanbkp';
 
 RMAN> restore database;
 
@@ -71,7 +76,7 @@ RMAN-06054: media recovery requesting unknown archived log for thread 1 with seq
 RMAN>
 run
 {
-set until scn 15273164;
+set until scn 16433524;
 recover database;
 }
 

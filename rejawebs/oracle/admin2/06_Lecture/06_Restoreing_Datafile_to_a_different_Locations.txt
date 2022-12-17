@@ -2,6 +2,9 @@
 Restoreing Datafile to a different Locations
 ---------------------------------------------------
 
+
+
+
 --let's nomount
 RMAN> shutdown immediate;
 

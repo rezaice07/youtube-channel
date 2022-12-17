@@ -1,6 +1,6 @@
 
 
-Declaration, initialization and Using vairables:
+Declaration, initialization and Using variables:
 ------------------------------------------------------
 
 --allow serveroutput on only once in a current session...
@@ -41,7 +41,8 @@ END;
 /
 	
 --example of binary_float. here we can't give precision and scale value of binary_float datatype
---this type of datatype is being used for scientific purpose. and result may not acccurate as you expect and can be used for large data manipulation.
+--this type of datatype is being used for scientific purpose. and the result may not acccurate as you expect 
+and can be used for large data manipulation.
 
 DECLARE
   v_employee_name VARCHAR(50) NOT NULL DEFAULT 'Rejwanul Reja';
