@@ -92,12 +92,12 @@ END;
 
 --Senerio 05
 --let's create a type and that can be stored in Type section.
-create or replace type t_list IS varray(107) OF VARCHAR2(100);
+CREATE OR REPLACE TYPE T_LIST IS VARRAY(107) OF VARCHAR2(100);
 /
---drop type that we have create in earlier statement.
+--drop type that we have createD in earlier statement.
 drop type t_list;
 /
---let's see how to we use the created vrray type 
+--let's see how to we use the created varray type 
 DECLARE  
   vr_list t_list := t_list(); 
   v_indx number := 1;

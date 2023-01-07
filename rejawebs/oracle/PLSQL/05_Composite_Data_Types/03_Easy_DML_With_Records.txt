@@ -1,5 +1,5 @@
 
-Easy DML WITH Record
+Easy DML WITH Composit Type
 -------------------------------
 CREATE TABLE Ret_Employees TABLESPACE users AS
 SELECT * FROM employees WHERE 1=2;
