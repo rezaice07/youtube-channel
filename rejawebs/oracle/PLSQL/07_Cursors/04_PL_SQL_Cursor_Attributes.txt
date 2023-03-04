@@ -2,7 +2,7 @@
 --%rowtype
 --%isopen
 --%notfound
---%rowcount: starting from 1 value and initialize after executing the fetch 
+--%rowcount: starting from 0 value and initialize after executing the fetch 
 DECLARE
   CURSOR c_emp_list
   IS

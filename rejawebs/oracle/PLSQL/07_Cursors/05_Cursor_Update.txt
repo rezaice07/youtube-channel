@@ -10,7 +10,7 @@ Update Cursor
 
 Syntax:
 
-curso cursor_name (parameter_name datatype....)
+cursor cursor_name (parameter_name datatype....)
 is select statement
 for update [of cloumns(s)] [nowait | wait n]
 

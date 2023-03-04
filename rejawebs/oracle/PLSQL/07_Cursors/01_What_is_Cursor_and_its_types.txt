@@ -21,11 +21,14 @@ Depending on use, there are types of cursors..
 	d. User/Programmer has the entire control.
 	e. Implicit Cursors are defined as:
 	DECLARE
-	CURSOR cur_name IS
-		SELECT attr_name from table_name 
-		where CONDITION;
-	BEGIN
-		//IMPLEMENTATION
+		CURSOR cur_name IS
+			SELECT attr_name from table_name 
+			where CONDITION;
+	BEGIN		
+		OPEN cur_name;
+		FETCH cur_name INTO VARIABLES;
+
+		CLOSE cur_name;
 	END;
 	
 	

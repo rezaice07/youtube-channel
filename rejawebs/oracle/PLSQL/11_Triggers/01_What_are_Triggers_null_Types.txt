@@ -5,5 +5,5 @@ Triggers
 Triggers in oracle are blocks of PL/SQL code which oracle engine can execute automatically based on some action or event. 
 These events can be: 
 	=> DDL statements (CREATE, ALTER, DROP, TRUNCATE) 
-	=> DML statements (INSERT, SELECT, UPDATE, DELETE)
+	=> DML statements (INSERT, UPDATE, DELETE)
 	

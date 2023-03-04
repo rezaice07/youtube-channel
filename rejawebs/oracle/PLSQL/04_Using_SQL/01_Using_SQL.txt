@@ -4,7 +4,7 @@ Use of SQL In PL/SQL
 -------------------------
 There are some issues???
 ------------------------
-	- you can not use ddl command directly
+	- you can not use DML command directly
 
 
 How to use SQL in PL/SQL?
@@ -55,7 +55,7 @@ END;
 --Need to remember:
   --> must be same type
   --> number of select items and into should be same
-  --> variable name and "Where clouse name should be same"
+  --> variable name and "Where clouse name should NOT be same"
   
 --Senerio 03:variable name and "Where" clause name should not be same
 

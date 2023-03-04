@@ -24,7 +24,7 @@ END;
 /
 
 --03. declaration of outer and inner block exception.
---If we try to use the inner block variable to out then the error will arise
+--If we will try to use the inner block variable to outer then the error will arise
 DECLARE
   v_employee_name VARCHAR2(100) := 'Rejwanul Reja';
 BEGIN
