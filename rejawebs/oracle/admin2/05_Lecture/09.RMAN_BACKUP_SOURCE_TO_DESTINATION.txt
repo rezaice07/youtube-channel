@@ -1,0 +1,139 @@
+
+RMAN backup to an another remote server
+--------------------------------------------
+First of all, you need to install oracle in both source and destination.
+After doing that we have to follow the below steps as like....
+
+01. CHECK DATABASE ARCHIVE STATUS
+	SQL>  archive log list
+	
+	Database log mode              No Archive Mode
+	Automatic archival             Disabled
+	Archive destination            USE_DB_RECOVERY_FILE_DEST
+	Oldest online log sequence     36
+	Current log sequence           38
+	
+	-OR WE CAN USE BELOW COMMAND ON DATABASE
+	SQL> SELECT LOG_MODE FROM V$DATABASE;
+
+	LOG_MODE
+	------------
+	NOARCHIVELOG
+
+	ARCHIVE REQUIREMENTS
+	--------------------
+	--01. ARCHIVE LOCATION
+	--02. ARCHIVE FILE FORMAT
+	
+	--CHECK DB_RECO
+	SQL> SHOW PARAMETER DB_RECO
+	NAME                                 TYPE        VALUE
+	------------------------------------ ----------- ------------------------------
+	db_recovery_file_dest                string      D:\Oracle\Oracle11g\app\Reja\f
+													 lash_recovery_area
+	db_recovery_file_dest_size           big integer 10G
+	
+	--Now we will alter following command for location and path respectively.
+
+	1. Archive location-- 
+	   --the below line is default. So we don't need to execute this one.
+	   SQL> alter system set db_recovery_file_dest='+FRA'; 
+	   
+    2. Archive file format
+       SQL> alter system set log_archive_format='%d_%t_%s_%r.arc' scope=spfile;
+	   
+	   -check now parameter format
+	   SQL> show parameter format
+	   
+    --Change/enable the status of database archive log
+	SQL> alter database archivelog;
+	alter database archivelog
+	*
+	ERROR at line 1:
+	ORA-01126: database must be mounted in this instance and not open in any
+	instance
+
+	--let's mount the database first.
+	SQL> shutdown immediate
+	Database closed.
+	Database dismounted.
+	ORACLE instance shut down.
+
+	SQL> startup mount;
+	ORACLE instance started.
+
+	Total System Global Area 2466249672 bytes
+	Fixed Size                  8899528 bytes
+	Variable Size             536870912 bytes
+	Database Buffers         1912602624 bytes
+	Redo Buffers                7876608 bytes
+	Database mounted.
+
+	--Now database at the stage of mount and could possible to alter the database in archivelog
+
+	SQL> alter database archivelog;
+
+	Database altered.
+
+	--Now open the database
+	SQL> alter database open;
+
+	Database altered.
+
+	--check archive log list status.
+	SQL> archive log list
+	Database log mode              Archive Mode
+	Automatic archival             Enabled
+	Archive destination            USE_DB_RECOVERY_FILE_DEST
+	Oldest online log sequence     38
+	Next log sequence to archive   40
+	Current log sequence           40
+
+	--ALSO CHECK DATABASE
+
+	SQL> SELECT LOG_MODE FROM V$DATABASE;
+
+	LOG_MODE
+	------------
+	ARCHIVELOG
+02. now execute RMAN TO CONNECT
+	RMAN TARGET /
+	
+03. Now take the backup	
+	run
+	{
+	allocate channel c1 type disk;
+	allocate channel c2 type disk;
+	backup as compressed backupset format='C:\rman_backup\orclFullDatabase_%U.bkp' database;
+	backup as compressed backupset format='C:\rman_backup\orclArchivelog_%U.bkp' archivelog all;
+	backup format='C:\rman_backup\orclControlfile_%U.bkp' current controlfile;
+	}	
+	
+04. copy rman backup and pfile and password file to destination database
+	and modify the path as per destination server available location
+	
+05. Nomount destination database
+	startup nomount
+
+06. RMAN> restore controlfile
+	restore controlfile from 'C:\rman_backup\ORCLCONTROLFILE_1L2181LQ_1_1.BKP';
+
+07. MOUNT AND Restore Database
+	RMAN> SQL 'ALTER DATABASE MOUNT';
+	RMAN> RESTORE DATABASE;
+
+08. Recover Database
+	RMAN> RECOVER DATABASE;
+	
+	NOTE: IF THERE ANY ERROR JUST USE STEP FOR BY USING SCN NUMBER FROM ERRO MESSAGE LAST LINE
+09. RMAN>
+	run
+	{
+	set until scn 4674423;
+	recover database;
+	}
+
+
+10. RMAN> alter database open resetlogs;
+
+########GOOD LUCK AND ENJOY.....................
