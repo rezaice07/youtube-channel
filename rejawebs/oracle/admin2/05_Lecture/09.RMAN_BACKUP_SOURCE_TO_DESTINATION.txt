@@ -100,14 +100,25 @@ After doing that we have to follow the below steps as like....
 	RMAN TARGET /
 	
 03. Now take the backup	
+	--for full backup
 	run
 	{
 	allocate channel c1 type disk;
 	allocate channel c2 type disk;
-	backup as compressed backupset format='C:\rman_backup\orclFullDatabase_%U.bkp' database;
-	backup as compressed backupset format='C:\rman_backup\orclArchivelog_%U.bkp' archivelog all;
-	backup format='C:\rman_backup\orclControlfile_%U.bkp' current controlfile;
-	}	
+	backup INCREMENTAL LEVEL =1 as compressed backupset format='C:\rman_backup\orclFullDatabase_%U.bkp' database;
+	backup INCREMENTAL LEVEL =1 as compressed backupset format='C:\rman_backup\orclArchivelog_%U.bkp' archivelog all;
+	backup INCREMENTAL LEVEL =1 format='C:\rman_backup\orclControlfile_%U.bkp' current controlfile;
+	}
+
+	--for differential incremental backup
+	run
+	{
+	allocate channel c1 type disk;
+	allocate channel c2 type disk;
+	backup INCREMENTAL LEVEL =1 as compressed backupset format='C:\rman_backup\orclFullDatabase_%U.bkp' database;
+	backup INCREMENTAL LEVEL =1 as compressed backupset format='C:\rman_backup\orclArchivelog_%U.bkp' archivelog all;
+	backup INCREMENTAL LEVEL =1 format='C:\rman_backup\orclControlfile_%U.bkp' current controlfile;
+	}
 	
 04. copy rman backup and pfile and password file to destination database
 	and modify the path as per destination server available location
