@@ -105,9 +105,9 @@ After doing that we have to follow the below steps as like....
 	{
 	allocate channel c1 type disk;
 	allocate channel c2 type disk;
-	backup INCREMENTAL LEVEL =1 as compressed backupset format='C:\rman_backup\orclFullDatabase_%U.bkp' database;
-	backup INCREMENTAL LEVEL =1 as compressed backupset format='C:\rman_backup\orclArchivelog_%U.bkp' archivelog all;
-	backup INCREMENTAL LEVEL =1 format='C:\rman_backup\orclControlfile_%U.bkp' current controlfile;
+	backup INCREMENTAL LEVEL =0 as compressed backupset format='C:\rman_backup\orclFullDatabase_%U.bkp' database;
+	backup INCREMENTAL LEVEL =0 as compressed backupset format='C:\rman_backup\orclArchivelog_%U.bkp' archivelog all;
+	backup INCREMENTAL LEVEL =0 format='C:\rman_backup\orclControlfile_%U.bkp' current controlfile;
 	}
 
 	--for differential incremental backup
