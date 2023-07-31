@@ -121,7 +121,7 @@ After doing that we have to follow the below steps as like....
 	}
 	
 04. copy rman backup and pfile and password file to destination database
-	and modify the path as per destination server available location
+	and modify the path as per destination server available location *** get pfile location by using the command ===>  show parameter pfile;
 	
 05. Nomount destination database
 	startup nomount
