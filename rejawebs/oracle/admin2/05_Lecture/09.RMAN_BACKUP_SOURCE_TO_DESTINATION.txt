@@ -124,7 +124,9 @@ After doing that we have to follow the below steps as like....
 	and modify the path as per destination server available location *** get pfile location by using the command ===>  show parameter pfile;
 	
 05. Nomount destination database
-	startup nomount
+	SQL> startup nomount
+	***login to RMAN> RMAN TARGET SYS/SYS123;
+	
 
 06. RMAN> restore controlfile
 	restore controlfile from 'C:\rman_backup\ORCLCONTROLFILE_1L2181LQ_1_1.BKP';
