@@ -149,4 +149,12 @@ After doing that we have to follow the below steps as like....
 
 10. RMAN> alter database open resetlogs;
 
+11. List Backup
+    RMAN> LIST BACKUP;
+
+12. DELETE BACKUP
+    RMAN> DELETE BACKUP;
+    NOTE: IF THERE ANY ISSUE TO DELETE BACKUP JUST FOLLOW THE LINK https://heliosguneserol.com/2018/08/23/rman-06207-warning-1-objects-could-not-be-deleted-for-disk-channels-due/
+
+
 ########GOOD LUCK AND ENJOY.....................
